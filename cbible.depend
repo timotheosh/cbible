@@ -1,0 +1,7 @@
+# depslib dependency file v1.0
+1434510486 source:/home/thawes/src/sources/cbible-codeblocks/cbible/main.cpp
+	<readline/readline.h>
+	<readline/history.h>
+	<iostream>
+	<string>
+
