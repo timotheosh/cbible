@@ -1,15 +1,21 @@
+/*
+ * cbible.cpp
+ */
 #include <readline/readline.h>
 #include <readline/history.h>
 #include <cstdlib>
 #include <iostream>
-#include <string>
+#include <swmgr.h>
+#include <swmodule.h>
+#include <markupfiltmgr.h>
 
+using namespace::sword;
 using namespace std;
 
-int main()
+int main(int argc, char *argv[])
 {
   char *buf;
-  rl_bind_key('\t',rl_abort);//disable auto-complete
+  rl_bind_key('\t',rl_abort);  //disable auto-complete
   while((buf = readline("\n >> "))!=NULL)
   {
     if (strcmp(buf,"quit")==0)
