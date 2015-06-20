@@ -10,12 +10,12 @@
 #include <swmodule.h>
 #include <markupfiltmgr.h>
 
-class SwordFuncs
+class swordfuncs
 {
  private:
-  sword::SWMgr library(new MarkupFilterMgr(FMT_PLAIN));
+  sword::SWMgr library;
   sword::SWModule *target;
-  std::string module = 'KJV';
+  const char *module = "KJV";
 
   void listModules();
 
@@ -23,10 +23,10 @@ class SwordFuncs
   // For derived classes
 
  public:
-  SwordFuncs();
-  SwordFuncs(char *);
-  virtual ~SwordFuncs();
-  lookup(char *);
-}
+  swordfuncs();
+  swordfuncs(char *);
+  virtual ~swordfuncs();
+  void lookup(char *);
+};
 
 #endif // SWORDFUNCS_HPP

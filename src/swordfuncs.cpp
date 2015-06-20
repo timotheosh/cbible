@@ -10,33 +10,35 @@
 
 using namespace::sword;
 
-SwordFuncs::SwordFuncs()
+swordfuncs::swordfuncs()
+{
+  swordfuncs::library = SWMgr(new MarkupFilterMgr(FMT_PLAIN));
+}
+
+swordfuncs::swordfuncs(char *mod_name)
+{
+  swordfuncs::module = mod_name;
+  swordfuncs();
+}
+
+swordfuncs::~swordfuncs()
 {
 }
 
-SwordFuncs::SwordFuncs(char *mod_name)
-{
-  module = mod_name;
-}
-
-SwordFuncs::~SwordFuncs()
-{
-}
-
-SwordFuncs::listModules()
+void swordfuncs::listModules()
 {
     ModMap::iterator it;
-    for (it = library.Modules.begin(); it != library.Modules.end(); it++) {
+    for (it = swordfuncs::library.Modules.begin(); it != swordfuncs::library.Modules.end(); it++) {
       fprintf(stderr, "[%s]\t - %s\n", (*it).second->Name(), (*it).second->Description());
     }
 }
 
-void SwordFuncs::lookup(char * ref)
+void swordfuncs::lookup(char * ref)
 {
-  target = library.getModule(SwordFuncs::module);
+  target = library.getModule(swordfuncs::module);
   if (!target) {
-    fprintf(stderr, "Could not find module [%s].  Available modules:\n", argv[1]);
-    listModules();
+    fprintf(stderr, "Could not find module [%s].  Available modules:\n", swordfuncs::module);
+    swordfuncs::listModules();
   }
 
   target->setKey(ref);
@@ -48,5 +50,4 @@ void SwordFuncs::lookup(char * ref)
   std::cout << "\n";
   std::cout << "==========================\n";
   std::cout << std::endl;
-  return 0;
 }

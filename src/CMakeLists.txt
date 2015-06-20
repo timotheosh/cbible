@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 2.6)
+project(cbible)
+include_directories("/usr/include/sword")
+link_directories("/usr/lib")
+link_libraries(sword readline)
+add_executable(cbible swordfuncs.cpp cbible.cpp)
+target_link_libraries(cbible sword)
+install(TARGETS cbible RUNTIME DESTINATION bin)
