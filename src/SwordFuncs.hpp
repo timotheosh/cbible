@@ -1,6 +1,6 @@
 
 /*
- * swordfuncs.hpp
+ * SwordFuncs.hpp
  */
 
 #ifndef SWORDFUNCS_HPP
@@ -10,7 +10,7 @@
 #include <swmodule.h>
 #include <markupfiltmgr.h>
 
-class swordfuncs
+class SwordFuncs
 {
  private:
   sword::SWMgr library;
@@ -23,9 +23,9 @@ class swordfuncs
   // For derived classes
 
  public:
-  swordfuncs();
-  swordfuncs(char *);
-  virtual ~swordfuncs();
+  SwordFuncs();
+  SwordFuncs(char *);
+  virtual ~SwordFuncs();
   void lookup(char *);
 };
 
