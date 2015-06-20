@@ -3,6 +3,7 @@
  */
 #include <readline/readline.h>
 #include <readline/history.h>
+#include <iostream>
 #include "SwordFuncs.hpp"
 
 using namespace::sword;
@@ -18,7 +19,8 @@ int main(int argc, char *argv[])
     if (strcmp(buf,"quit")==0)
       break;
 
-    sw->lookup(buf);
+    string ref = buf;
+    cout << sw->lookup(ref) << endl;
     if (buf[0]!=0)
       add_history(buf);
   }

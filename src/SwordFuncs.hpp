@@ -1,4 +1,3 @@
-
 /*
  * SwordFuncs.hpp
  */
@@ -13,20 +12,20 @@
 class SwordFuncs
 {
  private:
-  sword::SWMgr library;
+  sword::SWMgr manager;
   sword::SWModule *target;
-  const char *module = "KJV";
+  std::string module = "KJV";
 
-  void listModules();
+  std::string listModules();
 
  protected:
   // For derived classes
 
  public:
   SwordFuncs();
-  SwordFuncs(char *);
+  SwordFuncs(std::string);
   virtual ~SwordFuncs();
-  void lookup(char *);
+  std::string lookup(std::string);
 };
 
 #endif // SWORDFUNCS_HPP
