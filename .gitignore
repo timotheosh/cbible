@@ -3,6 +3,7 @@
 \#*
 .\#*
 *.o
+.deps
 CMakeCache.txt
 CMakeFiles/
 Makefile
