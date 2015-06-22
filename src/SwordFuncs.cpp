@@ -57,7 +57,7 @@ std::string SwordFuncs::listModules()
     return ss.str();
 }
 
-std::string SwordFuncs::lookupRange(std::string ref)
+std::string SwordFuncs::lookup(std::string ref)
 {
   std::string output = "";
   //Module variables
@@ -78,13 +78,5 @@ std::string SwordFuncs::lookupRange(std::string ref)
   }
   output += "\n";
   output += module->getKey()->getRangeText();
-  return output;
-}
-
-std::string SwordFuncs::lookupVerse(std::string ref)
-{
-  std::string output;
-  module->setKey(ref.c_str());
-  output = module->RenderText();
   return output;
 }

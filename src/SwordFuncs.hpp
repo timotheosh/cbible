@@ -41,8 +41,7 @@ class SwordFuncs
   SwordFuncs();
   SwordFuncs(std::string);
   virtual ~SwordFuncs();
-  std::string lookupRange(std::string filter);
-  std::string lookupVerse(std::string);
+  std::string lookup(std::string);
 };
 
 #endif // SWORDFUNCS_HPP
