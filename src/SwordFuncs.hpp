@@ -34,6 +34,8 @@ class SwordFuncs
 
   std::string listModules();
 
+  void SetModule(std::string);
+
  protected:
   // For derived classes
 
@@ -41,6 +43,8 @@ class SwordFuncs
   SwordFuncs();
   SwordFuncs(std::string);
   virtual ~SwordFuncs();
+  std::string modname();
+  std::string parseInput(char * input);
   std::string lookup(std::string);
 };
 

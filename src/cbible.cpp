@@ -20,7 +20,7 @@
 #include <iostream>
 #include "SwordFuncs.hpp"
 
-using namespace::sword;
+using namespace sword;
 using namespace std;
 
 int main(int argc, char *argv[])
@@ -28,15 +28,20 @@ int main(int argc, char *argv[])
   char *buf;
   SwordFuncs *sw = new SwordFuncs();
   rl_bind_key('\t',rl_abort);  //disable auto-complete
-  while((buf = readline("\n >> "))!=NULL)
+
+  std::string prompt = "\n" + sw->modname() + " >> ";
+
+  while((buf = readline(prompt.c_str()))!=NULL)
   {
-    if (strcmp(buf,"quit")==0)
+    if ((strcmp(buf,"quit")==0) ||
+        (strcmp(buf, "q") == 0))
       break;
 
-    string ref = buf;
-    cout << sw->lookup(ref) << endl;
+    cout << sw->parseInput(buf) << endl;
+
     if (buf[0]!=0)
       add_history(buf);
+    prompt = "\n" + sw->modname() + " >> ";
   }
   free(buf);
   free(sw);
