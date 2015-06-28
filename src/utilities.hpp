@@ -1,6 +1,6 @@
 /**
  *  Utility functions.
-*/
+ */
 #ifndef UTILITIES_HPP
 #define UTILITIES_HPP
 
@@ -8,6 +8,11 @@
 #include <functional>
 #include <cctype>
 #include <locale>
+
+/**
+ * Code for trimming whitespace from strings.
+ * http://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
+ */
 
 // trim from start
 static inline std::string &ltrim(std::string &s) {
