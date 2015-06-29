@@ -53,11 +53,12 @@ void SwordFuncs::SetModule(std::string module_name)
 {
   manager = new SWMgr(new MarkupFilterMgr(FMT_PLAIN));
   module = manager->getModule(module_name.c_str());
-  module->setKey(vkey);
 
   if (!module) {
+    module = manager->getModule(mod_name.c_str());
     std::cout << listModules() << std::endl;
   } else {
+    module->setKey(vkey);
     mod_name = module_name;
   }
 }
