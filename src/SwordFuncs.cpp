@@ -53,12 +53,29 @@ void SwordFuncs::SetModule(std::string module_name)
 {
   manager = new SWMgr(new MarkupFilterMgr(FMT_PLAIN));
   module = manager->getModule(module_name.c_str());
+  module->setKey(vkey);
 
   if (!module) {
     std::cout << listModules() << std::endl;
   } else {
     mod_name = module_name;
   }
+}
+
+std::string SwordFuncs::currentRef()
+{
+  if (vkey.isTraversable())
+    vkey++;
+
+  module->setKey(vkey);
+  std::string ret = "";
+
+  ret += std::to_string(vkey.getVerse());
+  ret += " ";
+  ret += module->RenderText();
+  ret += "\n";
+  ret += module->getKey()->getText();
+  return ret;
 }
 
 std::string SwordFuncs::parseInput(char * input)
@@ -71,6 +88,8 @@ std::string SwordFuncs::parseInput(char * input)
     SetModule(mod);
     return(mod);
   }
+  else if (str.empty())
+    return currentRef();
   else
     return lookup(str);
 }
@@ -93,7 +112,8 @@ std::string SwordFuncs::modname()
 std::string SwordFuncs::lookup(std::string ref)
 {
   std::string output = "";
-  //Module variables
+
+  // Set up module specific variables
   sword::VerseKey vk;
 
   //Variables related to splitting up the reference for iteration
@@ -113,6 +133,7 @@ std::string SwordFuncs::lookup(std::string ref)
     }
     output += "\n";
     output += module->getKey()->getRangeText();
+    vkey = module->getKey();
   }
   catch(const std::runtime_error& re)
   {

@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
   rl_bind_key('\t',rl_abort);  //disable auto-complete
 
   std::string prompt = "\n" + sw->modname() + " >> ";
-
+  std::cout << sw->parseInput(const_cast<char *>("Gen 1:1")) << std::endl;
   while((buf = readline(prompt.c_str()))!=NULL)
   {
     if ((strcmp(buf,"quit")==0) ||

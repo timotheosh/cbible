@@ -30,6 +30,7 @@ class SwordFuncs
  private:
   sword::SWMgr *manager;
   sword::SWModule *module;
+  sword::VerseKey vkey;
   std::string mod_name;
 
   std::string listModules();
@@ -43,6 +44,7 @@ class SwordFuncs
   SwordFuncs();
   SwordFuncs(std::string);
   virtual ~SwordFuncs();
+  std::string currentRef();
   std::string modname();
   std::string parseInput(char * input);
   std::string lookup(std::string);
