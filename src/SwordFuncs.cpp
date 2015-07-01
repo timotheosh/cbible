@@ -47,6 +47,8 @@ SwordFuncs::SwordFuncs(std::string module_name)
 
 SwordFuncs::~SwordFuncs()
 {
+  free(module);
+  free(manager);
 }
 
 void SwordFuncs::SetModule(std::string module_name)
@@ -66,6 +68,8 @@ void SwordFuncs::SetModule(std::string module_name)
 std::string SwordFuncs::currentRef()
 {
   std::string ret = vkey.getText();
+  if (ret.empty())
+    ret = "foo";
   return ret;
 }
 

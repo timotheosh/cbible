@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
 
   rl_bind_key('\t',rl_abort);  //disable auto-complete
 
-  std::string prompt = "\nbible(" + sw->modname() + ") []> ";
+  std::string prompt = "\nbible(" + sw->modname() + ") [" + sw->currentRef() + "]> ";
 
   while((buf = readline(prompt.c_str()))!=NULL)
   {
