@@ -32,6 +32,7 @@ class SwordFuncs
   sword::SWModule *module;
   sword::VerseKey vkey;
   std::string mod_name;
+  bool init = false;
 
   std::string listModules();
 
@@ -45,6 +46,7 @@ class SwordFuncs
   SwordFuncs(std::string);
   virtual ~SwordFuncs();
   std::string currentRef();
+  std::string currentText();
   std::string modname();
   std::string parseInput(char * input);
   std::string lookup(std::string);

@@ -26,22 +26,24 @@ using namespace std;
 int main(int argc, char *argv[])
 {
   char *buf;
-  SwordFuncs *sw = new SwordFuncs();
+  SwordFuncs *sw = new SwordFuncs("KJV");
+  // std::cout << sw->parseInput(const_cast<char *>("Gen 1:1")) << std::endl;
+
   rl_bind_key('\t',rl_abort);  //disable auto-complete
 
-  std::string prompt = "\n" + sw->modname() + " >> ";
-  std::cout << sw->parseInput(const_cast<char *>("Gen 1:1")) << std::endl;
+  std::string prompt = "\nbible(" + sw->modname() + ") []> ";
+
   while((buf = readline(prompt.c_str()))!=NULL)
   {
     if ((strcmp(buf,"quit")==0) ||
         (strcmp(buf, "q") == 0))
       break;
 
-    cout << sw->parseInput(buf) << endl;
+    cout << sw->parseInput(buf);
 
     if (buf[0]!=0)
       add_history(buf);
-    prompt = "\n" + sw->modname() + " >> ";
+    prompt = "\nbible(" + sw->modname() + ") [" + sw->currentRef()  + "]> ";
   }
   free(buf);
   free(sw);

@@ -42,7 +42,7 @@ SwordFuncs::SwordFuncs()
 SwordFuncs::SwordFuncs(std::string module_name)
 {
   mod_name = module_name;
-  SwordFuncs();
+  SetModule(mod_name);
 }
 
 SwordFuncs::~SwordFuncs()
@@ -65,9 +65,12 @@ void SwordFuncs::SetModule(std::string module_name)
 
 std::string SwordFuncs::currentRef()
 {
-  if (vkey.isTraversable())
-    vkey++;
+  std::string ret = vkey.getText();
+  return ret;
+}
 
+std::string SwordFuncs::currentText()
+{
   module->setKey(vkey);
   std::string ret = "";
 
@@ -90,7 +93,16 @@ std::string SwordFuncs::parseInput(char * input)
     return(mod);
   }
   else if (str.empty())
-    return currentRef();
+  {
+    if (init)
+    {
+      if (vkey.isTraversable())
+        vkey++;
+    }
+    else
+      init = true;
+    return currentText();
+  }
   else
     return lookup(str);
 }
