@@ -76,14 +76,11 @@ std::string SwordFuncs::currentRef()
 std::string SwordFuncs::currentText()
 {
   module->setKey(vkey);
-  std::string ret = "";
+  std::ostringstream os;
 
-  ret += std::to_string(vkey.getVerse());
-  ret += " ";
-  ret += module->RenderText();
-  ret += "\n";
-  ret += module->getKey()->getText();
-  return ret;
+  std::string text = module->RenderText();
+  os << " " << vkey.getVerse() <<  " " << trim(text);
+  return os.str();
 }
 
 std::string SwordFuncs::parseInput(char * input)
@@ -94,7 +91,6 @@ std::string SwordFuncs::parseInput(char * input)
     std::string mod = str.substr(1);
     trim(mod);
     SetModule(mod);
-    return(mod);
   }
   else if (str.empty())
   {
@@ -107,11 +103,10 @@ std::string SwordFuncs::parseInput(char * input)
       if (vkey.isTraversable())
         vkey++;
     }
-
-    return currentText();
   }
   else
     return lookup(str);
+  return currentText();
 }
 
 std::string SwordFuncs::listModules()
@@ -131,7 +126,7 @@ std::string SwordFuncs::modname()
 
 std::string SwordFuncs::lookup(std::string ref)
 {
-  std::string output = "";
+  std::ostringstream output;
 
   // Set up module specific variables
   sword::VerseKey vk;
@@ -141,18 +136,17 @@ std::string SwordFuncs::lookup(std::string ref)
   refRange.Persist(true);
   module->setKey(refRange);
 
-  int i = 0;
   try
   {
+    int i = 0;
     for((*module) = sword::TOP; !module->Error(); (*module)++) {
+      i++;
       sword::VerseKey nk(module->getKey());
-      output += " ";
-      output += std::to_string(nk.getVerse());
-      output += " ";
-      output += module->RenderText();
+      std::string text = module->RenderText();
+      output << " " << nk.getVerse() << " " << trim(text);
     }
-    output += "\n";
-    output += module->getKey()->getRangeText();
+    if (i > 1)
+      output << std::endl << module->getKey()->getRangeText();
     vkey = module->getKey();
   }
   catch(const std::runtime_error& re)
@@ -171,5 +165,6 @@ std::string SwordFuncs::lookup(std::string ref)
     // catch any other errors (that we have no information about)
     std::cerr << "Unknown failure occured. Possible memory corruption" << std::endl;
   }
-  return output;
+  //output.flush();
+  return output.str();
 }
