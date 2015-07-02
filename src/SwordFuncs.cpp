@@ -100,11 +100,14 @@ std::string SwordFuncs::parseInput(char * input)
   {
     if (init)
     {
+      init = false;
+    }
+    else
+    {
       if (vkey.isTraversable())
         vkey++;
     }
-    else
-      init = true;
+
     return currentText();
   }
   else
