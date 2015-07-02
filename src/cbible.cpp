@@ -17,35 +17,83 @@
 
 #include <readline/readline.h>
 #include <readline/history.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
 #include <iostream>
 #include "SwordFuncs.hpp"
 
 using namespace sword;
 using namespace std;
 
+void OutputText(std::string s);
+
 int main(int argc, char *argv[])
 {
   char *buf;
+
   SwordFuncs *sw = new SwordFuncs("KJV");
-  // std::cout << sw->parseInput(const_cast<char *>("Gen 1:1")) << std::endl;
 
   rl_bind_key('\t',rl_abort);  //disable auto-complete
 
-  std::string prompt = "\nbible(" + sw->modname() + ") [" + sw->currentRef() + "]> ";
+  OutputText(sw->parseInput(const_cast<char *>("Gen 1:1")));
 
-  while((buf = readline(prompt.c_str()))!=NULL)
+  while((buf = readline(("bible(" + sw->modname() + ") [" + sw->currentRef()
+                         + "]> ").c_str()))!=NULL)
   {
     if ((strcmp(buf,"quit")==0) ||
         (strcmp(buf, "q") == 0))
       break;
 
-    cout << sw->parseInput(buf);
+    OutputText(sw->parseInput(buf).c_str());
 
     if (buf[0]!=0)
       add_history(buf);
-    prompt = "\nbible(" + sw->modname() + ") [" + sw->currentRef()  + "]> ";
   }
   free(buf);
   free(sw);
   return 0;
+}
+
+
+void OutputText(std::string s)
+{
+  struct winsize w;
+  ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+
+  int bufferWidth = w.ws_col;
+
+  for (unsigned int i = 1; i <= s.length() ; i++)
+  {
+    char c = s[i-1];
+
+    int spaceCount = 0;
+
+    // Add whitespace if newline detected.
+    if (c == '\n')
+    {
+      int charNumOnLine = ((i) % bufferWidth);
+      spaceCount = bufferWidth - charNumOnLine;
+      s.insert((i-1), (spaceCount), ' ');                       //insert space before newline break
+      i+=(spaceCount);                                                  //jump forward in string to character at beginning of next line
+      continue;
+    }
+
+    if ((i % bufferWidth) == 0)
+    {
+      if (c != ' ')
+      {
+        for (int j = (i-1); j > -1 ; j--)
+        {
+          if (s[j] == ' ')
+          {
+            s.insert(j, spaceCount, ' ');
+            break;
+          }
+          else spaceCount++;
+        }
+      }
+    }
+  }
+  // Output string to console
+  std::cout << s << std::endl;
 }
