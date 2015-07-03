@@ -73,8 +73,10 @@ void OutputText(std::string s)
     {
       int charNumOnLine = ((i) % bufferWidth);
       spaceCount = bufferWidth - charNumOnLine;
-      s.insert((i-1), (spaceCount), ' ');                       //insert space before newline break
-      i+=(spaceCount);                                                  //jump forward in string to character at beginning of next line
+      /* insert space before newline break */
+      s.insert((i-1), (spaceCount), ' ');
+      /* jump forward in string to character at beginning of next line. */
+      i+=(spaceCount);
       continue;
     }
 
