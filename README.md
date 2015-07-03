@@ -1,3 +1,4 @@
+```
       __          __       ___             
      /\ \      __/\ \     /\_ \            
   ___\ \ \____/\_\ \ \____\//\ \      __   
@@ -7,6 +8,8 @@
  \/____/ \/___/  \/_/\/___/  \/____/\/____/
                                            
                                            
+```
+
 cbible
 
 This program is a C/C++ interface to Crosswire's libsword, with readline
