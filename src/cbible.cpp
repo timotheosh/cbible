@@ -21,6 +21,7 @@
 #include <unistd.h>
 #include <iostream>
 #include "SwordFuncs.hpp"
+#include "Options.hpp"
 
 using namespace sword;
 using namespace std;
@@ -29,27 +30,44 @@ void OutputText(std::string s);
 
 int main(int argc, char *argv[])
 {
-  char *buf;
-
-  SwordFuncs *sw = new SwordFuncs("KJV");
-
-  rl_bind_key('\t',rl_abort);  //disable auto-complete
-
-  OutputText(sw->parseInput(const_cast<char *>("Gen 1:1")));
-
-  while((buf = readline(("bible(" + sw->modname() + ") [" + sw->currentRef()
-                         + "]> ").c_str()))!=NULL)
-  {
-    if ((strcmp(buf,"quit")==0) ||
-        (strcmp(buf, "q") == 0))
-      break;
-
-    OutputText(sw->parseInput(buf).c_str());
-
-    if (buf[0]!=0)
-      add_history(buf);
+  Options options(argc, argv);
+  std::string help = options.getOption("help");
+  std::string bibleversion = options.getOption("bibleversion");
+  std::string reference = options.getOption("reference");
+  /* Display usage and exit */
+  if (! help.empty()) {
+    cout << help << endl;
+    return(0);
   }
-  free(buf);
+  if (bibleversion.empty())
+    bibleversion = "KJV";
+  
+  SwordFuncs *sw = new SwordFuncs(bibleversion);
+
+  /* Use interactive mode */
+  if (reference.empty()) {
+    char *buf;
+    rl_bind_key('\t',rl_abort);  //disable auto-complete
+
+    OutputText(sw->parseInput(const_cast<char *>("Gen 1:1")));
+
+    while((buf = readline(("bible(" + sw->modname() + ") [" + sw->currentRef()
+                          + "]> ").c_str()))!=NULL)
+    {
+      if ((strcmp(buf,"quit")==0) ||
+          (strcmp(buf, "q") == 0))
+        break;
+
+      OutputText(sw->parseInput(buf).c_str());
+
+      if (buf[0]!=0)
+        add_history(buf);
+    }
+    free(buf);
+  } else {
+    /* Lookup the reference and exit. */
+      OutputText(sw->parseInput(const_cast<char *>(reference.c_str())));
+  }
   free(sw);
   return 0;
 }
