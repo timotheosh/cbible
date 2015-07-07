@@ -23,6 +23,8 @@
 #include "SwordFuncs.hpp"
 #include "Options.hpp"
 
+#define CBIBLE_VERSION 0.05
+
 using namespace sword;
 using namespace std;
 
@@ -37,6 +39,9 @@ int main(int argc, char *argv[])
   /* Display usage and exit */
   if (! help.empty()) {
     cout << help << endl;
+    return(0);
+  } else if (!options.getOption("version").empty()) {
+    std::cout << "cbible Version " << CBIBLE_VERSION << std::endl;
     return(0);
   }
   if (bibleversion.empty())

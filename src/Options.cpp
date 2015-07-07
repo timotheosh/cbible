@@ -30,7 +30,7 @@ Options::Options(int argc, char *argv[])
     char *p_home = getenv("HOME");
     if (p_home != NULL)
       home = p_home;
-    std::string default_config = home + "/cbible.cfg";
+    std::string default_config = home + "/.cbible.cfg";
     std::string config_file;
     std::stringstream s_help_options;
     
@@ -121,6 +121,8 @@ std::string Options::getOption(std::string option)
   if (varmap.count(option.c_str())) {
     if (option == "help")
       ret << help_options;
+    else if (option == "version")
+      ret << "true";
     else
       ret << varmap[option].as<std::string>();
   }
