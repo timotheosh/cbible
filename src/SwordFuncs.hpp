@@ -24,9 +24,9 @@
 #include <listkey.h>
 #include <versekey.h>
 #include <swdisp.h>
+#include <string>
 
-class SwordFuncs
-{
+class SwordFuncs {
  private:
   sword::SWMgr *manager;
   sword::SWModule *module;

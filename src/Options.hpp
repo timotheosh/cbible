@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Tim Hawes <email>
+ * Copyright 2015 Tim Hawes <tim@selfdidactic.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,12 +25,12 @@ namespace po = boost::program_options;
 
 class Options
 {
-private:
+ private:
   po::variables_map varmap;
   std::string help_options;
   void createConfig(std::string configfile);
-  
-public:
+
+ public:
   Options(int argc, char *argv[]);
   ~Options();
   std::string getOption(std::string);

@@ -11,7 +11,7 @@
 
 /**
  * Code for trimming whitespace from strings.
- * http://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
+ * Copied from http://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
  */
 
 // trim from start

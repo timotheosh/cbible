@@ -20,25 +20,22 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <iostream>
+#include <string>
 #include "SwordFuncs.hpp"
 #include "Options.hpp"
 
 #define CBIBLE_VERSION 0.05
 
-using namespace sword;
-using namespace std;
-
 void OutputText(std::string s);
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
   Options options(argc, argv);
   std::string help = options.getOption("help");
   std::string bibleversion = options.getOption("bibleversion");
   std::string reference = options.getOption("reference");
   /* Display usage and exit */
-  if (! help.empty()) {
-    cout << help << endl;
+  if (!help.empty()) {
+    std::cout << help << std::endl;
     return(0);
   } else if (!options.getOption("version").empty()) {
     std::cout << "cbible Version " << CBIBLE_VERSION << std::endl;
@@ -46,26 +43,25 @@ int main(int argc, char *argv[])
   }
   if (bibleversion.empty())
     bibleversion = "KJV";
-  
+
   SwordFuncs *sw = new SwordFuncs(bibleversion);
 
   /* Use interactive mode */
   if (reference.empty()) {
     char *buf;
-    rl_bind_key('\t',rl_abort);  //disable auto-complete
+    rl_bind_key('\t', rl_abort);  // disable auto-complete
 
     OutputText(sw->parseInput(const_cast<char *>("Gen 1:1")));
 
-    while((buf = readline(("bible(" + sw->modname() + ") [" + sw->currentRef()
-                          + "]> ").c_str()))!=NULL)
-    {
-      if ((strcmp(buf,"quit")==0) ||
+    while ((buf = readline(("bible(" + sw->modname() + ") [" + sw->currentRef()
+                          + "]> ").c_str())) != NULL) {
+      if ((strcmp(buf, "quit") == 0) ||
           (strcmp(buf, "q") == 0))
         break;
 
       OutputText(sw->parseInput(buf).c_str());
 
-      if (buf[0]!=0)
+      if (buf[0] != 0)
         add_history(buf);
     }
     free(buf);
@@ -78,22 +74,19 @@ int main(int argc, char *argv[])
 }
 
 
-void OutputText(std::string s)
-{
+void OutputText(std::string s) {
   struct winsize w;
   ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
 
   int bufferWidth = w.ws_col;
 
-  for (unsigned int i = 1; i <= s.length() ; i++)
-  {
+  for (unsigned int i = 1; i <= s.length() ; i++) {
     char c = s[i-1];
 
     int spaceCount = 0;
 
     // Add whitespace if newline detected.
-    if (c == '\n')
-    {
+    if (c == '\n') {
       int charNumOnLine = ((i) % bufferWidth);
       spaceCount = bufferWidth - charNumOnLine;
       /* insert space before newline break */
@@ -103,18 +96,15 @@ void OutputText(std::string s)
       continue;
     }
 
-    if ((i % bufferWidth) == 0)
-    {
-      if (c != ' ')
-      {
-        for (int j = (i-1); j > -1 ; j--)
-        {
-          if (s[j] == ' ')
-          {
+    if ((i % bufferWidth) == 0) {
+      if (c != ' ') {
+        for (int j = (i-1); j > -1 ; j--) {
+          if (s[j] == ' ') {
             s.insert(j, spaceCount, ' ');
             break;
+          } else {
+            spaceCount++;
           }
-          else spaceCount++;
         }
       }
     }
