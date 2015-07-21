@@ -2,7 +2,6 @@ language: C++
 sudo: false
 compiler:
   - clang
-  - gcc
 addons:
   apt:
     packages:
