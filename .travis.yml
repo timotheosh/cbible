@@ -1,7 +1,6 @@
 language: C++
 compiler:
   - clang
-  - gcc
 before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -y libsword-dev libreadline-dev libboost-program-options-dev cmake make
