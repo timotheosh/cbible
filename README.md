@@ -9,6 +9,7 @@
                                            
                                            
 ```
+[![Build Status](https://travis-ci.org/timotheosh/cbible.svg?branch=master)](https://travis-ci.org/timotheosh/cbible)
 
 cbible
 
