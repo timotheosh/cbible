@@ -9,6 +9,7 @@ CMakeFiles/
 Makefile
 cbible
 cmake_install.cmake
+build/
 GPATH
 GRTAGS
 GTAGS

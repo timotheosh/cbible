@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 2.8)
 project(cbible)
 include_directories("/usr/include/sword")
 link_directories("/usr/lib")
-link_libraries(sword readline)
 set(cbible_sources ${CMAKE_CURRENT_SOURCE_DIR}/src/Options.cpp
                    ${CMAKE_CURRENT_SOURCE_DIR}/src/SwordFuncs.cpp
                    ${CMAKE_CURRENT_SOURCE_DIR}/src/cbible.cpp)

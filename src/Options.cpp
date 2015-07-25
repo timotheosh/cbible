@@ -40,19 +40,20 @@ Options::Options(int argc, char *argv[]) {
 
     po::options_description generic("Generic options");
     generic.add_options()
-      ("version,v", "print version string")
-      ("help", "produce help message")
-      ("config,c",
-        po::value<std::string>(&config_file)->
-            default_value(default_config.c_str()),
-       "name of a configuration file.");
+        ("version,v", "print version string")
+        ("help", "produce help message")
+        ("config,c",
+         po::value<std::string>(&config_file)->
+         default_value(default_config.c_str()),
+         "name of a configuration file.")
+        ("versenumbers,n","turn on verse numbers");
 
     po::options_description config("Configuration");
     config.add_options()
-      ("bibleversion,b",
+        ("bibleversion,b",
          po::value<std::string>(&bibleversion)->default_value("KJV"),
          "Bible version (Using Sword's 3 letter acronym).")
-      ("reference,r",
+        ("reference,r",
          po::value<std::string>(&reference)->default_value(""),
          "Scripture reference to lookup");
 
@@ -62,7 +63,7 @@ Options::Options(int argc, char *argv[]) {
     po::options_description config_file_options;
     config_file_options.add(config);
     po::store(po::command_line_parser(argc, argv).
-        options(cmdline_options).run(), varmap);
+              options(cmdline_options).run(), varmap);
     po::notify(varmap);
 
     if (varmap.count("help")) {
@@ -99,7 +100,7 @@ void Options::createConfig(std::string configfile) {
           << std::endl;
     } else {
       throw std::invalid_argument(
-        "Cannot open non-existent config file for writing.");
+          "Cannot open non-existent config file for writing.");
     }
   } catch (std::exception &e) {
     std::cerr << "Exception thrown during config file creation: "
@@ -114,12 +115,15 @@ void Options::createConfig(std::string configfile) {
 std::string Options::getOption(std::string option) {
   std::ostringstream ret;
   if (varmap.count(option.c_str())) {
-    if (option == "help")
+    if (option == "help") {
       ret << help_options;
-    else if (option == "version")
+    } else if (option == "version") {
       ret << "true";
-    else
+    } else if (option == "versenumbers") {
+      ret << "true";
+    } else {
       ret << varmap[option].as<std::string>();
+    }
   }
   return ret.str();
 }

@@ -32,11 +32,13 @@ class SwordFuncs {
   sword::SWModule *module;
   sword::VerseKey vkey;
   std::string mod_name;
-  bool init = false;
+  bool versenum = true;
 
   std::string listModules();
 
+  /* Initialize module for use. Called by all constructors. */
   void SetModule(std::string);
+
 
  protected:
   // For derived classes
@@ -45,10 +47,29 @@ class SwordFuncs {
   SwordFuncs();
   SwordFuncs(std::string);
   virtual ~SwordFuncs();
+
+  /**
+   * Turn on/off versification for output.
+   * @params on Boolean that turns on/off versification for output.
+   */
+  void versification(bool on);
+
+  /* Return current Scripture reference. */
   std::string currentRef();
+
+  /* Return current Scripture Text. */
   std::string currentText();
+
+  /* Return the current module name */
   std::string modname();
+
+  /* Parse input:
+   *  - Change active module
+   *  - Lookup verse reference
+   */
   std::string parseInput(char * input);
+
+  /* Look up Scripture reference. */
   std::string lookup(std::string);
 };
 

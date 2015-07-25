@@ -61,6 +61,10 @@ void SwordFuncs::SetModule(std::string module_name) {
   }
 }
 
+void SwordFuncs::versification(bool on) {
+  versenum = on;
+}
+
 std::string SwordFuncs::currentRef() {
   std::string ret = vkey.getText();
   if (ret.empty())
@@ -73,7 +77,10 @@ std::string SwordFuncs::currentText() {
   std::ostringstream os;
 
   std::string text = module->RenderText();
-  os << " " << vkey.getVerse() <<  " " << trim(text);
+  if (versenum) {
+    os << " " << vkey.getVerse();
+  }
+  os <<  " " << trim(text);
   return os.str();
 }
 
@@ -84,11 +91,8 @@ std::string SwordFuncs::parseInput(char * input) {
     trim(mod);
     SetModule(mod);
   } else if (str.empty()) {
-    if (init) {
-      init = false;
-    } else {
-      if (vkey.isTraversable())
-        vkey++;
+    if (vkey.isTraversable()) {
+      vkey++;
     }
   } else {
     return lookup(str);
@@ -127,7 +131,10 @@ std::string SwordFuncs::lookup(std::string ref) {
       i++;
       sword::VerseKey nk(module->getKey());
       std::string text = module->RenderText();
-      output << " " << nk.getVerse() << " " << trim(text);
+      if (versenum) {
+        output << " " << nk.getVerse();
+      }
+      output << " " << trim(text);
     }
     if (i > 1)
       output << std::endl << module->getKey()->getRangeText();

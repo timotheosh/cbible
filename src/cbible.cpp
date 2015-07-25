@@ -33,6 +33,8 @@ int main(int argc, char *argv[]) {
   std::string help = options.getOption("help");
   std::string bibleversion = options.getOption("bibleversion");
   std::string reference = options.getOption("reference");
+  std::string versenumbers = options.getOption("versenumbers");
+
   /* Display usage and exit */
   if (!help.empty()) {
     std::cout << help << std::endl;
@@ -54,7 +56,7 @@ int main(int argc, char *argv[]) {
     OutputText(sw->parseInput(const_cast<char *>("Gen 1:1")));
 
     while ((buf = readline(("bible(" + sw->modname() + ") [" + sw->currentRef()
-                          + "]> ").c_str())) != NULL) {
+                            + "]> ").c_str())) != NULL) {
       if ((strcmp(buf, "quit") == 0) ||
           (strcmp(buf, "q") == 0))
         break;
@@ -67,7 +69,10 @@ int main(int argc, char *argv[]) {
     free(buf);
   } else {
     /* Lookup the reference and exit. */
-      OutputText(sw->parseInput(const_cast<char *>(reference.c_str())));
+    if (versenumbers.empty()) {
+      sw->versification(false);
+    }
+    OutputText(sw->parseInput(const_cast<char *>(reference.c_str())));
   }
   free(sw);
   return 0;
@@ -75,35 +80,39 @@ int main(int argc, char *argv[]) {
 
 
 void OutputText(std::string s) {
+
   struct winsize w;
   ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
 
   int bufferWidth = w.ws_col;
 
-  for (unsigned int i = 1; i <= s.length() ; i++) {
-    char c = s[i-1];
+  /* If executed from Emacs' eshell, bufferWidth will be 0. */
+  if (bufferWidth > 0) {
+    for (unsigned int i = 1; i <= s.length() ; i++) {
+      char c = s[i-1];
 
-    int spaceCount = 0;
+      int spaceCount = 0;
 
-    // Add whitespace if newline detected.
-    if (c == '\n') {
-      int charNumOnLine = ((i) % bufferWidth);
-      spaceCount = bufferWidth - charNumOnLine;
-      /* insert space before newline break */
-      s.insert((i-1), (spaceCount), ' ');
-      /* jump forward in string to character at beginning of next line. */
-      i+=(spaceCount);
-      continue;
-    }
+      // Add whitespace if newline detected.
+      if (c == '\n') {
+        int charNumOnLine = ((i) % bufferWidth);
+        spaceCount = bufferWidth - charNumOnLine;
+        /* insert space before newline break */
+        s.insert((i-1), (spaceCount), ' ');
+        /* jump forward in string to character at beginning of next line. */
+        i+=(spaceCount);
+        continue;
+      }
 
-    if ((i % bufferWidth) == 0) {
-      if (c != ' ') {
-        for (int j = (i-1); j > -1 ; j--) {
-          if (s[j] == ' ') {
-            s.insert(j, spaceCount, ' ');
-            break;
-          } else {
-            spaceCount++;
+      if ((i % bufferWidth) == 0) {
+        if (c != ' ') {
+          for (int j = (i-1); j > -1 ; j--) {
+            if (s[j] == ' ') {
+              s.insert(j, spaceCount, ' ');
+              break;
+            } else {
+              spaceCount++;
+            }
           }
         }
       }
