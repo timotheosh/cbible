@@ -26,7 +26,7 @@ script:
   - cd tests/build
   - cmake ../
   - make
-  - ./cbibleTests
+  #- ./cbibleTests
   - cd ../../build
   - cmake ../
   - make
