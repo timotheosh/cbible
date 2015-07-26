@@ -15,6 +15,7 @@ addons:
       - libsword-dev
       - libreadline-dev
       - libboost-program-options-dev
+      - sword-text-kjv
 
 install:
   # g++4.8.1
@@ -26,7 +27,7 @@ script:
   - cd tests/build
   - cmake ../
   - make
-  #- ./cbibleTests
+  - ./cbibleTests
   - cd ../../build
   - cmake ../
   - make
