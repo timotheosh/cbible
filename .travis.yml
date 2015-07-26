@@ -1,5 +1,5 @@
 language: cpp
-#sudo: false
+sudo: false
 
 compiler:
   - gcc
@@ -22,6 +22,7 @@ install:
   - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8"; fi
 
 script:
+  - cp -r tests/swordtest ~/.sword
   - mkdir -p tests/build
   - mkdir -p build
   - cd tests/build
