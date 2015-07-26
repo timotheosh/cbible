@@ -153,3 +153,15 @@ std::string SwordFuncs::lookup(std::string ref) {
   }
   return output.str();
 }
+
+bool SwordFuncs::makeEntry(std::string ref, std::string input) {
+  bool ret = module->isWritable();
+  if (ret) {
+    vkey.setText(const_cast<char *>(ref.c_str()));
+    module->setKey(vkey);
+    const char* data = const_cast<char *>(input.c_str());
+    long length = input.length();
+    module->setEntry(data, length);
+  }
+  return ret;
+}

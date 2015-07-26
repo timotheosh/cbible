@@ -23,4 +23,16 @@ TEST_CASE( "Tests for SwordFuncs", "[SwordFuncs]" ) {
     REQUIRE( sw->currentRef() == "Romans 8:28" );
     free(sw);
   }
+  
+  SECTION ( "Test SwordFuncs writing to commentary module." ) {
+    SwordFuncs *sw = new SwordFuncs("Personal");
+    // Set up some variables in preparation for the test.
+    std::string str = "This is some test commentary notes.\n";
+    str += "Just for the sake of testing...";
+    std::string ref = "Lam 3:4";
+    sw->makeEntry(ref, str);
+    sw->versification(false);
+    REQUIRE( sw->lookup(ref) == " " + str );
+    free(sw);
+  }
 }

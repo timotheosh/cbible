@@ -71,6 +71,11 @@ class SwordFuncs {
 
   /* Look up Scripture reference. */
   std::string lookup(std::string);
+  
+  /* Write an entry in commentary. Module has to be set to a writable module
+   * (such as the Sword Personal commentary module).
+   */
+  bool makeEntry(std::string ref, std::string input);
 };
 
 #endif // SWORDFUNCS_HPP

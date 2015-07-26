@@ -21,6 +21,7 @@
 #include <unistd.h>
 #include <iostream>
 #include <string>
+#include <sstream>
 #include "SwordFuncs.hpp"
 #include "Options.hpp"
 
@@ -34,6 +35,7 @@ int main(int argc, char *argv[]) {
   std::string bibleversion = options.getOption("bibleversion");
   std::string reference = options.getOption("reference");
   std::string versenumbers = options.getOption("versenumbers");
+  std::string inputtext = options.getOption("input");
 
   /* Display usage and exit */
   if (!help.empty()) {
@@ -72,7 +74,16 @@ int main(int argc, char *argv[]) {
     if (versenumbers.empty()) {
       sw->versification(false);
     }
-    OutputText(sw->parseInput(const_cast<char *>(reference.c_str())));
+    if (inputtext.empty()) {
+      OutputText(sw->parseInput(const_cast<char *>(reference.c_str())));
+    } else {
+      std::string line;
+      std::stringstream is;
+      while ( std::getline(std::cin,line) ) {
+        is << line << std::endl;
+      }
+      sw->makeEntry(reference, is.str());
+    }
   }
   free(sw);
   return 0;
