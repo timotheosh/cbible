@@ -15,13 +15,20 @@ addons:
       - libsword-dev
       - libreadline-dev
       - libboost-program-options-dev
+      - sword-text-kjv
 
 install:
   # g++4.8.1
   - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8"; fi
 
 script:
-  - mkdir build
-  - cd build
+  - cp -r tests/swordtest ~/.sword
+  - mkdir -p tests/build
+  - mkdir -p build
+  - cd tests/build
+  - cmake ../
+  - make
+  - ./cbibleTests
+  - cd ../../build
   - cmake ../
   - make
