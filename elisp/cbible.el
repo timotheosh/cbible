@@ -34,12 +34,36 @@
 (eval-when-compile
   (require 'cl))
 
-(defun cbible-lookup (bibleversion reference)
-  (setq breference
-        (substring
-         (shell-command-to-string
-          (format "cbible -r %s -b %s" bibleversion reference))
-         0 -1)))
+(defgroup cbible nil
+  "cbible"
+  :group 'cbible
+  :prefix "cb-")
+
+(defcustom bibleversion "KJV"
+  "Bible version to use (as defined within Sword)."
+  :type 'string
+  :group 'cbible
+  )
+
+(defun cbible-reference (version reference)
+  (if version
+      (setq bibver version)
+    (setq bibver bibleversion))
+  (substring
+   (shell-command-to-string
+    (format "cbible -b %s -r \"%s\"" bibver reference))
+   0 -1))
+
+(defun cbible-lookup()
+  (setq version (read-from-minibuffer "Bible Version: "))
+  (setq ref (read-from-minibuffer "Reference: "))
+  (insert (cbible-reference version ref)))
+
+(define-minor-mode cbible-mode
+  "cbible mode"
+  :group 'cbible
+  (if cbible-mode
+      ))
 
 
 (provide 'cbible)
