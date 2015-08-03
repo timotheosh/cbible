@@ -17,9 +17,16 @@ This program is a C/C++ interface to Crosswire's libsword, with readline
 support.
 
 Requires:
-  libsword from crosswire: http://www.crosswire.org
-  GNU readline library
-  Cmake 2.8 or greater
+  * libsword from crosswire: http://www.crosswire.org
+  * GNU readline library
+  * Cmake 2.8 or greater
+
+On Ubuntu 14.04, you can install these requirements with:
+```
+sudo apt-get install build-essentials libsword-dev libreadline-dev cmake
+```
+NOTE: This is not compatible with version 1.7 and higher of Sword (libsword). So if you are using a newer version of libsword than what comes on Ubuntu 14.04 (1.6), it will not compile.
+
 
 This is currently developed on an Ubuntu 14.04 system with stock libs. It
 relies on sys/ioctl.h and unistd.h for determining terminal (or screen)
