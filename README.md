@@ -23,7 +23,7 @@ Requires:
 
 On Ubuntu 14.04, you can install these requirements with:
 ```
-sudo apt-get install build-essentials libsword-dev libreadline-dev cmake
+sudo apt-get install build-essentials libboost-program-options-dev libsword-dev libreadline-dev cmake
 ```
 NOTE: This is not compatible with version 1.7 and higher of Sword (libsword). So if you are using a newer version of libsword than what comes on Ubuntu 14.04 (1.6), it will not compile.
 
