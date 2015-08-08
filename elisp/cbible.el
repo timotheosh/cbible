@@ -58,6 +58,7 @@
 
 (defun cbible-lookup()
   "Function that prompts for Scripture reference and version."
+  (interactive)
   (setq version (read-from-minibuffer "Bible Version: "))
   (setq ref (read-from-minibuffer "Reference: "))
   (insert (cbible-reference version ref)))
@@ -66,13 +67,15 @@
   "Function for creating a Personal commentary entry."
   (setq ref (read-from-minibuffer "Reference: "))
   (shell-command
-   (format "cbible -b Personal -r \"%s\" -i \"%s\"" ref entry)))
+   (format "echo \"%s\"|cbible -b Personal -r \"%s\" -i" entry ref)))
 
 (defun cbible-entry-region()
   "Send region as a Personal commentary entry."
+  (interactive)
   (cbible-make-entry (buffer-substring-no-properties (region-beginning) (region-end))))
 
 (defun cbible-entry-buffer()
+  (interactive)
   "Send entire buffer as a Personal commentary entry."
   (cbible-make-entry (buffer-substring-no-properties 1 (buffer-size))))
 
@@ -86,8 +89,7 @@
             (define-key map (kbd "C-c l") 'cbible-lookup)
             map)
   :group 'cbible
-  (if cbible-mode
-      ))
+      )
 
 (provide 'cbible)
 ;;; cbible.el ends here
