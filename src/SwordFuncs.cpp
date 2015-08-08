@@ -21,7 +21,7 @@
 #include <listkey.h>
 #include <versekey.h>
 #include <swdisp.h>
-
+#include <cstdint>
 #include <cstdlib>
 #include <cstdio>
 #include <iostream>
@@ -160,7 +160,7 @@ bool SwordFuncs::makeEntry(std::string ref, std::string input) {
     vkey.setText(const_cast<char *>(ref.c_str()));
     module->setKey(vkey);
     const char* data = const_cast<char *>(input.c_str());
-    long length = input.length();
+    int64_t length = input.length();
     module->setEntry(data, length);
   }
   return ret;

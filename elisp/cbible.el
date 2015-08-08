@@ -46,7 +46,9 @@
   )
 
 (defun cbible-reference (version reference)
-  (if version
+  "Function for looking up Bible passages. Send first value as a
+   nil or empty string to use default version."
+  (if (and version (> (length version) 0))
       (setq bibver version)
     (setq bibver bibleversion))
   (substring
@@ -55,16 +57,37 @@
    0 -1))
 
 (defun cbible-lookup()
+  "Function that prompts for Scripture reference and version."
   (setq version (read-from-minibuffer "Bible Version: "))
   (setq ref (read-from-minibuffer "Reference: "))
   (insert (cbible-reference version ref)))
 
+(defun cbible-make-entry(entry)
+  "Function for creating a Personal commentary entry."
+  (setq ref (read-from-minibuffer "Reference: "))
+  (shell-command
+   (format "cbible -b Personal -r \"%s\" -i \"%s\"" ref entry)))
+
+(defun cbible-entry-region()
+  "Send region as a Personal commentary entry."
+  (cbible-make-entry (buffer-substring-no-properties (region-beginning) (region-end))))
+
+(defun cbible-entry-buffer()
+  "Send entire buffer as a Personal commentary entry."
+  (cbible-make-entry (buffer-substring-no-properties 1 (buffer-size))))
+
 (define-minor-mode cbible-mode
-  "cbible mode"
+  "cbible mode allows you to insert Bible quotes using Crosswire
+   Bible software. It interacts with a small program called cbible
+   to access libsword Bibles (see http://crosswire.org for more
+   information)."
+  :lighter " cbible "
+  :keymap (let ((map (make-sparse-keymap)))
+            (define-key map (kbd "C-c l") 'cbible-lookup)
+            map)
   :group 'cbible
   (if cbible-mode
       ))
-
 
 (provide 'cbible)
 ;;; cbible.el ends here

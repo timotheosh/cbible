@@ -15,6 +15,7 @@
  *
  */
 
+#include <stdio.h>
 #include <readline/readline.h>
 #include <readline/history.h>
 #include <sys/ioctl.h>
@@ -25,7 +26,7 @@
 #include "SwordFuncs.hpp"
 #include "Options.hpp"
 
-#define CBIBLE_VERSION 0.05
+#define CBIBLE_VERSION 0.09
 
 void OutputText(std::string s);
 
@@ -79,7 +80,7 @@ int main(int argc, char *argv[]) {
     } else {
       std::string line;
       std::stringstream is;
-      while ( std::getline(std::cin,line) ) {
+      while ( std::getline(std::cin, line) ) {
         is << line << std::endl;
       }
       sw->makeEntry(reference, is.str());
@@ -91,7 +92,6 @@ int main(int argc, char *argv[]) {
 
 
 void OutputText(std::string s) {
-
   struct winsize w;
   ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
 

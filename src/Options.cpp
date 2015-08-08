@@ -46,8 +46,8 @@ Options::Options(int argc, char *argv[]) {
          po::value<std::string>(&config_file)->
          default_value(default_config.c_str()),
          "name of a configuration file.")
-        ("versenumbers,n","turn on verse numbers")
-        ("input,i","Send stdin to specified commentary reference.");
+        ("versenumbers,n", "turn on verse numbers")
+        ("input,i", "Send stdin to specified commentary reference.");
 
     po::options_description config("Configuration");
     config.add_options()

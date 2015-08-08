@@ -18,7 +18,7 @@
 #ifndef OPTIONS_HPP
 #define OPTIONS_HPP
 
-#include <vector>
+#include <string>
 #include <boost/program_options.hpp>
 
 namespace po = boost::program_options;
