@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Tim Hawes <tim@selfdidactic.com>
+ * Copyright 2016 Tim Hawes <tim@selfdidactic.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,12 @@
  *
  */
 
-#include <boost/program_options.hpp>
+#include <iostream>
 #include <cstdlib>
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <boost/program_options.hpp>
 #include "Options.hpp"
 
 
