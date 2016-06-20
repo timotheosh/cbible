@@ -76,7 +76,8 @@ std::string SwordFuncs::currentText() {
   module->setKey(vkey);
   std::ostringstream os;
 
-  std::string text = module->RenderText();
+  sword::SWBuf buffer = module->renderText();
+  std::string text = buffer.c_str();
   if (versenum) {
     os << " " << vkey.getVerse();
   }
@@ -104,8 +105,8 @@ std::string SwordFuncs::listModules() {
   sword::ModMap::iterator it;
   std::ostringstream ss;
   for (it = manager->Modules.begin(); it != manager->Modules.end(); it++) {
-    ss << "[" << (*it).second->Name() << "]\t - "
-       << (*it).second->Description() << std::endl;
+    ss << "[" << (*it).second->getName() << "]\t - "
+       << (*it).second->getDescription() << std::endl;
   }
   return ss.str();
 }
@@ -121,16 +122,17 @@ std::string SwordFuncs::lookup(std::string ref) {
   sword::VerseKey vk;
 
   // Variables related to splitting up the reference for iteration
-  sword::ListKey refRange = vk.ParseVerseList(ref.c_str(), vk, true);
-  refRange.Persist(true);
+  sword::ListKey refRange = vk.parseVerseList(ref.c_str(), vk, true);
+  refRange.setPersist(true);
   module->setKey(refRange);
 
   try {
     int i = 0;
-    for ((*module) = sword::TOP; !module->Error(); (*module)++) {
+    for ((*module) = sword::TOP; !module->popError(); (*module)++) {
       i++;
       sword::VerseKey nk(module->getKey());
-      std::string text = module->RenderText();
+      sword::SWBuf buffer = module->renderText();
+      std::string text = buffer.c_str();
       if (versenum) {
         output << " " << nk.getVerse();
       }
