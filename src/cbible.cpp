@@ -27,7 +27,7 @@
 #include "SwordFuncs.hpp"
 #include "Options.hpp"
 
-#define CBIBLE_VERSION 0.10
+#define CBIBLE_VERSION "0.20"
 
 void OutputText(std::string s);
 

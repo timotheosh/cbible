@@ -23,21 +23,17 @@ Requires:
   * GNU readline library
   * Cmake 2.8 or greater
 
-On Ubuntu 14.04, you can install these requirements with:
+On Ubuntu 16.04, you can install these requirements with:
 ```
-sudo apt-get install build-essentials libboost-program-options-dev libsword-dev libreadline-dev cmake
+sudo apt-get install build-essentials libsword-dev libreadline-dev cmake
 ```
-
-NOTE: This is not compatible with version 1.7 and higher of Sword
-(libsword). So if you are using a newer version of libsword than what
-comes on Ubuntu 14.04 (1.6), it will not compile.
 
 NOTE: If you are new to Crosswire's libsword, it is highly recommended
 that you first install some software that will help you in installing
-Bible versions that can be used, and a Peersonal commentary that you
+Bible versions that can be used, and a Personal commentary that you
 can insert your own entries into.
 
-This is currently developed on an Ubuntu 14.04 system with stock libs. It
+This is currently developed on an Ubuntu 16.04 system with stock libs. It
 relies on sys/ioctl.h and unistd.h for determining terminal (or screen)
 size.
 

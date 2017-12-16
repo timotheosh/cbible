@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Tim Hawes <tim@selfdidactic.com>
+ * Copyright 2017 Tim Hawes <tim@selfdidactic.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
+ * Class Options
+ *
+ * Description: Handles options for running the cbible application. It
+ * handles both a configuration from an ini file and command line
+ * options.
  */
 
 #ifndef OPTIONS_HPP
 #define OPTIONS_HPP
 
-#include <string>
-#include <boost/program_options.hpp>
+#define CONFIGFILE ".cbible.cfg"
+#define DEFAULT_VERSION "KJV"
+#define DEFAULT_REFERENCE "Gen 1:1"
 
-namespace po = boost::program_options;
+#include <string>
+#include <map>
 
 class Options {
  private:
-  po::variables_map varmap;
-  std::string help_options;
-  void createConfig(std::string configfile);
+  /* Vars for holding the option data for cbible */
+  std::map<std::string, std::string> opts;
+
+  /* Read options from ini file. */
+  void readIni();
+
+  /* Creates the default config file. */
+  void createConfig();
+
+  /* Checks for existence of default config file. */
+  void checkConfig();
 
  public:
   Options(int argc, char *argv[]);
@@ -36,4 +51,4 @@ class Options {
   std::string getOption(const char *);
 };
 
-#endif // OPTIONS_HPP
+#endif  // OPTIONS_HPP
