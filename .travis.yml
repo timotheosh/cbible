@@ -1,29 +1,18 @@
 language: cpp
 sudo: required
-dist: trusty
+
+services:
+  - docker
+
+before_install:
+  - mkdir ~/
+  - docker pull timotheosh/cbible-tests
+  - docker run -d -p 127.0.0.1:80:4567 -v ~/cbible:/usr/local/src -v ~/cbible/tests/swordtest:/usr/share/sword/modules -it timotheosh/cbible-tests
 
 compiler:
   - gcc
 
-addons:
-  apt:
-    sources:
-      - ubuntu-toolchain-r-test
-    packages:
-      - cmake
-      - make
-      - g++-4.8
-      - libsword-dev
-      - libreadline-dev
-      - libboost-program-options-dev
-      - sword-text-kjv
-
-install:
-  # g++4.8.1
-  - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8"; fi
-
 script:
-  - cp -r tests/swordtest ~/.sword
   - mkdir -p tests/build
   - mkdir -p build
   - cd tests/build
