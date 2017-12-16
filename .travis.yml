@@ -5,8 +5,8 @@ services:
   - docker
 
 before_install:
-  - mkdir ~/
-  - docker pull timotheosh/cbible-tests
+  - cd cbible/tests/docker
+  - docker build -t timotheosh/cbible-tests
   - docker run -d -p 127.0.0.1:80:4567 -v ~/cbible:/usr/local/src -v ~/cbible/tests/swordtest:/usr/share/sword/modules -it timotheosh/cbible-tests
 
 compiler:
