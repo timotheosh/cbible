@@ -87,7 +87,11 @@ std::string SwordFuncs::currentText() {
 
 std::string SwordFuncs::parseInput(char * input) {
   std::string str = input;
-  if (str.compare(0, 1, "?") == 0) {
+  if (str.compare(0, 2, "??") == 0) {
+    std::cout << "perform global search" << std::endl;
+  } else if (str.compare(0, 1, "?") == 0) {
+    std::cout << "perform search within module" << std::endl;
+  } else if (str.compare(0, 1, "!") == 0) {
     std::string mod = str.substr(1);
     trim(mod);
     SetModule(mod);
