@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Tim Hawes <tim@selfdidactic.com>
+ * Copyright 2016 Tim Hawes <tim@selfdidactic.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ class SwordFuncs {
 
  public:
   SwordFuncs();
-  SwordFuncs(std::string);
+  explicit SwordFuncs(std::string);
   virtual ~SwordFuncs();
 
   /**
@@ -71,7 +71,7 @@ class SwordFuncs {
 
   /* Look up Scripture reference. */
   std::string lookup(std::string);
-  
+
   /* Write an entry in commentary. Module has to be set to a writable module
    * (such as the Sword Personal commentary module).
    */

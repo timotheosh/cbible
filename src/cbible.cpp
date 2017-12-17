@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Tim Hawes <tim@selfdidactic.com>
+ * Copyright 2016 Tim Hawes <tim@selfdidactic.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,11 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <exception>
 #include "SwordFuncs.hpp"
 #include "Options.hpp"
 
-#define CBIBLE_VERSION 0.09
+#define CBIBLE_VERSION "0.20"
 
 void OutputText(std::string s);
 
@@ -56,18 +57,26 @@ int main(int argc, char *argv[]) {
     char *buf;
     rl_bind_key('\t', rl_abort);  // disable auto-complete
 
-    OutputText(sw->parseInput(const_cast<char *>("Gen 1:1")));
+    try {
+      OutputText("sw->parseInput(const_cast<char *>(\"Gen 1:1\"))");
+      OutputText(sw->parseInput(const_cast<char *>("Gen 1:1")));
+      while ((buf = readline(("bible(" + sw->modname() + ") ["
+                              + sw->currentRef() + "]> ").c_str())) != NULL) {
+        if ((strcmp(buf, "quit") == 0) ||
+            (strcmp(buf, "q") == 0))
+          break;
 
-    while ((buf = readline(("bible(" + sw->modname() + ") [" + sw->currentRef()
-                            + "]> ").c_str())) != NULL) {
-      if ((strcmp(buf, "quit") == 0) ||
-          (strcmp(buf, "q") == 0))
-        break;
+        try {
+          OutputText(sw->parseInput(buf).c_str());
+        } catch (std::exception &e) {
+          std::cout << e.what() << std::endl;
+        }
 
-      OutputText(sw->parseInput(buf).c_str());
-
-      if (buf[0] != 0)
-        add_history(buf);
+        if (buf[0] != 0)
+          add_history(buf);
+      }
+    } catch (std::exception &e) {
+      std::cout << e.what() << std::endl;
     }
     free(buf);
   } else {

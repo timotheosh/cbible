@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Tim Hawes <tim@selfdidactic.com>
+ * Copyright 2016 Tim Hawes <tim@selfdidactic.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,90 +15,170 @@
  *
  */
 
-#include <boost/program_options.hpp>
+#include <cstdio>
 #include <cstdlib>
-#include <fstream>
-#include <sstream>
+#include <cstring>
+#include <iostream>
 #include <string>
+#include <sstream>
+#include <fstream>
+#include <vector>
+#include "thirdparty/optionparser.h"
+#include "thirdparty/INIReader.h"
 #include "Options.hpp"
+
+#define PROGNAME "cbible"
+
+struct Arg: public option::Arg {
+  static void printError(const char* msg1, const option::Option& opt,
+                         const char* msg2) {
+    fprintf(stderr, "%s", msg1);
+    fwrite(opt.name, opt.namelen, 1, stderr);
+    fprintf(stderr, "%s", msg2);
+  }
+
+
+  static option::ArgStatus Unknown(const option::Option& option, bool msg) {
+    if (msg) printError("Unknown option '", option, "'\n");
+    return option::ARG_ILLEGAL;
+  }
+
+
+  static option::ArgStatus NonEmpty(const option::Option& option, bool msg) {
+  /* These option keys will always exist, we'll only need to check them. */
+
+    if (option.arg != 0 && option.arg[0] != 0)
+      return option::ARG_OK;
+    if (msg) {
+      if ((strcmp(option.name, "c") == 0) ||
+          (strcmp(option.name, "--config") == 0))
+        printError("Option '", option, "' requires a path to a config file.\n");
+      else
+        printError("Option '", option, "' requires a non-empty argument\n");
+    }
+    return option::ARG_ILLEGAL;
+  }
+};
+
+enum optionIndex { UNKNOWN, HELP, VERSION, CONFIG, VERSENUMBERS, INPUT,
+                   BIBLEVERSION, REFERENCE};
+
+const option::Descriptor usage[] = {
+  {UNKNOWN, 0, "", "", option::Arg::None,
+   "Usage: " PROGNAME " <options>\n\n" "Options:" },
+  {HELP, 0, "h", "help", option::Arg::None,
+   "  -h [ --help ]  \tProduce help message"},
+  {VERSION, 0, "v", "version", option::Arg::None,
+   "  -v [ --version ]  \tPrint version string"},
+  {CONFIG, 0, "c", "config", Arg::NonEmpty,
+   "  -c [ --config ]  <path>  \tPath for a configuration file"},
+  {VERSENUMBERS, 0, "n", "versenumbers", option::Arg::None,
+   "  -n [ --versenumbers ]  \tShow output with verse numbers"},
+  {INPUT, 0, "i", "input", option::Arg::None,
+   "Send stdin to personal commentary (must be used with -r)."},
+  {BIBLEVERSION, 0, "b", "bibleversion", Arg::NonEmpty,
+   "  -b [ --bibleversion ] <bible version>  \tBible version "
+   "(using Sword's 3 letter acronym)"},
+  {REFERENCE, 0, "r", "reference", Arg::NonEmpty,
+   "  -r [ --reference ] <reference>  \tScripture reference to look up"},
+  {0, 0, 0, 0, 0, 0}
+};
+
 
 
 Options::Options(int argc, char *argv[]) {
-  try {
-    int opt;
-    std::string home;
-    char *p_home = getenv("HOME");
-    if (p_home != NULL)
-      home = p_home;
-    std::string default_config = home + "/.cbible.cfg";
-    std::string config_file;
-    std::stringstream s_help_options;
+  argc -= (argc > 0); argv += (argc > 0);  // skip program name argv[0]
+  option::Stats  stats(usage, argc, argv);
+  std::vector<option::Option> options(stats.options_max);
+  std::vector<option::Option> buffer(stats.buffer_max);
+  option::Parser parse(usage, argc, argv, &options[0], &buffer[0]);
 
-    // Variables for options
-    std::string bibleversion;
-    std::string reference;
+  if (options[HELP]) {
+    std::stringstream hs;
+    option::printUsage(hs, usage);
+    Options::opts["help"] = hs.str();
+  } else if (options[VERSION]) {
+    Options::opts["version"] = "version";
+  } else {
+    /* set up value for default config file. */
+    std::string s_home = getenv("HOME");
+    if (!s_home.empty())
+      Options::opts["default_configfile"] = s_home + "/" + CONFIGFILE;
+    else
+      Options::opts["default_configfile"] = CONFIGFILE;
 
-    po::options_description generic("Generic options");
-    generic.add_options()
-        ("version,v", "print version string")
-        ("help", "produce help message")
-        ("config,c",
-         po::value<std::string>(&config_file)->
-         default_value(default_config.c_str()),
-         "name of a configuration file.")
-        ("versenumbers,n", "turn on verse numbers")
-        ("input,i", "Send stdin to specified commentary reference.");
-
-    po::options_description config("Configuration");
-    config.add_options()
-        ("bibleversion,b",
-         po::value<std::string>(&bibleversion)->default_value("KJV"),
-         "Bible version (Using Sword's 3 letter acronym).")
-        ("reference,r",
-         po::value<std::string>(&reference)->default_value(""),
-         "Scripture reference to lookup");
-
-    po::options_description cmdline_options;
-    cmdline_options.add(generic).add(config);
-
-    po::options_description config_file_options;
-    config_file_options.add(config);
-    po::store(po::command_line_parser(argc, argv).
-              options(cmdline_options).run(), varmap);
-    po::notify(varmap);
-
-    if (varmap.count("help")) {
-      std::ostringstream s_help_options;
-      s_help_options << cmdline_options;
-      help_options = s_help_options.str();
-    }
-
-    std::ifstream ifs(config_file.c_str());
-    if (!ifs) {
-      createConfig(config_file);
+    /* If no config file was specified, use the default. */
+    if (options[CONFIG]) {
+      Options::opts["config"] = options[CONFIG].arg;
     } else {
-      po::store(parse_config_file(ifs, config_file_options), varmap);
-      po::notify(varmap);
+      Options::opts["config"] = Options::opts["default_configfile"];
     }
-  } catch (std::exception &e) {
-    std::cerr << "Exception caught in Options object: "
-              << e.what() << std::endl;
-  } catch (...) {
-    std::cerr << "Unknown Exception caught in Options object."
-              << std::endl;
-  }
+
+    if (options[BIBLEVERSION]) {
+      Options::opts["bibleversion"] = options[BIBLEVERSION].arg;
+    } else {
+      readIni();
+    }
+
+    if (options[REFERENCE]) {
+      Options::opts["reference"] = options[REFERENCE].arg;
+    }
+
+    Options::opts["input"] = "";
+    if (options[INPUT]) {
+      if (!options[REFERENCE]) {
+        std::cerr << "-i input option cannot be used without a -r reference "
+                  << "(\"You want me to put this... where?\")" <<std::endl;
+      } else {
+        Options::opts["input"] = "input";
+      }
+    }
+  }  // end else
 }
 
 Options::~Options() {
 }
 
-void Options::createConfig(std::string configfile) {
+void Options::readIni() {
+  /**
+   * Reads settings from ini file.
+   */
+  INIReader reader(Options::opts["config"]);
+  if (reader.ParseError() < 0) {
+    std::cerr << "Cannot read configuration from " << Options::opts["config"]
+              << std::endl;
+    return;
+  }
+  if (Options::opts["bibleversion"].empty())
+    Options::opts["bibleversion"] =
+        reader.Get("", "bibleversion", DEFAULT_VERSION);
+}
+
+void Options::checkConfig() {
+  /**
+   * Checks for the existence of the default config file. If it does
+   * not exist, it will create one.
+   */
+  FILE *cfgfile = fopen(Options::opts["default_configfile"].c_str(), "r");
+  if (cfgfile == NULL)
+    createConfig();
+  else
+    fclose(cfgfile);
+}
+
+void Options::createConfig() {
+  /**
+   * Creates a new config file.
+   *
+   * @params configfile Path for the new config file.
+   */
+  if (Options::opts["bibleversion"].empty())
+    Options::opts["bibleversion"] = DEFAULT_VERSION;
   std::ofstream ofs;
   try {
-    ofs.open(configfile.c_str());
+    ofs.open(Options::opts["default_configfile"].c_str());
     if (ofs) {
-      ofs << "bibleversion = " << varmap["bibleversion"].as<std::string>()
-          << std::endl;
+      ofs << "bibleversion = " << Options::opts["bibleversion"] << std::endl;
     } else {
       throw std::invalid_argument(
           "Cannot open non-existent config file for writing.");
@@ -113,25 +193,11 @@ void Options::createConfig(std::string configfile) {
   ofs.close();
 }
 
-std::string Options::getOption(std::string option) {
-  std::ostringstream ret;
-  if (varmap.count(option.c_str())) {
-    if (option == "help") {
-      ret << help_options;
-    } else if (option == "version") {
-      ret << "true";
-    } else if (option == "versenumbers") {
-      ret << "true";
-    } else if (option == "input") {
-      ret << "true";
-    } else {
-      ret << varmap[option].as<std::string>();
-    }
-  }
-  return ret.str();
+std::string Options::getOption(std::string opt) {
+  return Options::opts[opt];
 }
 
 std::string Options::getOption(const char *opt) {
-  std::string option = opt;
-  return getOption(option);
+  std::string s = opt;
+  return Options::getOption(s);
 }
