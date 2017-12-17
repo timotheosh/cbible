@@ -130,13 +130,7 @@ Options::Options(int argc, char *argv[]) {
         std::cerr << "-i input option cannot be used without a -r reference "
                   << "(\"You want me to put this... where?\")" <<std::endl;
       } else {
-        std::stringstream ss;
-        if ((parse.nonOptionsCount() > 0) && options[INPUT]) {
-          for (int i = 0; i < parse.nonOptionsCount(); ++i)
-            ss << parse.nonOption(i) << std::endl;
-          ss << std::endl;
-        }
-        Options::opts["input"] = ss.str();
+        Options::opts["input"] = "input";
       }
     }
   }  // end else
@@ -156,7 +150,8 @@ void Options::readIni() {
     return;
   }
   if (Options::opts["bibleversion"].empty())
-    Options::opts["bibleversion"] = reader.Get("", "bibleversion", DEFAULT_VERSION);
+    Options::opts["bibleversion"] =
+        reader.Get("", "bibleversion", DEFAULT_VERSION);
 }
 
 void Options::checkConfig() {

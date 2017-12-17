@@ -7,7 +7,7 @@ services:
 before_install:
   - cd cbible/tests/docker
   - docker build -t timotheosh/cbible-tests
-  - docker run -d -p 127.0.0.1:80:4567 -v ~/cbible:/usr/local/src -v ~/cbible/tests/swordtest:/usr/share/sword/modules -it timotheosh/cbible-tests
+  - docker run -d -v ~/cbible:/usr/local/src -v ~/cbible/tests/swordtest:/usr/share/sword/modules -it timotheosh/cbible-tests -c "mkdir -p /usr/local/src/tests/build && cd /usr/local/src/tests/build && cmake ../ && make && ./cbibleTests"
 
 compiler:
   - gcc
