@@ -58,7 +58,6 @@ int main(int argc, char *argv[]) {
     rl_bind_key('\t', rl_abort);  // disable auto-complete
 
     try {
-      OutputText("sw->parseInput(const_cast<char *>(\"Gen 1:1\"))");
       OutputText(sw->parseInput(const_cast<char *>("Gen 1:1")));
       while ((buf = readline(("bible(" + sw->modname() + ") ["
                               + sw->currentRef() + "]> ").c_str())) != NULL) {
