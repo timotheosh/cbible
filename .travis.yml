@@ -5,8 +5,7 @@ services:
   - docker
 
 before_install:
-  - cd cbible/tests/docker
-  - docker build -t timotheosh/cbible-tests
+  - docker build -t timotheosh/cbible-tests ~/cbible/tests/docker
 
 compiler:
   - gcc
