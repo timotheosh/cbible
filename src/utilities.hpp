@@ -21,30 +21,34 @@
 #define UTILITIES_HPP
 
 #include <algorithm>
-#include <functional>
 #include <cctype>
+#include <functional>
 #include <locale>
 
 /**
  * Code for trimming whitespace from strings.
- * Copied from http://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
+ * Copied from
+ * http://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
  */
 
 // trim from start
 static inline std::string &ltrim(std::string &s) {
-        s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
-        return s;
+  s.erase(s.begin(),
+          std::find_if(s.begin(), s.end(),
+                       std::not1(std::ptr_fun<int, int>(std::isspace))));
+  return s;
 }
 
 // trim from end
 static inline std::string &rtrim(std::string &s) {
-        s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
-        return s;
+  s.erase(std::find_if(s.rbegin(), s.rend(),
+                       std::not1(std::ptr_fun<int, int>(std::isspace)))
+              .base(),
+          s.end());
+  return s;
 }
 
 // trim from both ends
-static inline std::string &trim(std::string &s) {
-        return ltrim(rtrim(s));
-}
+static inline std::string &trim(std::string &s) { return ltrim(rtrim(s)); }
 
-#endif //UTILITIES_HPP
+#endif // UTILITIES_HPP

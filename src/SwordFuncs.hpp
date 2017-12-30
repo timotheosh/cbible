@@ -18,16 +18,16 @@
 #ifndef SWORDFUNCS_HPP
 #define SWORDFUNCS_HPP
 
+#include <listkey.h>
+#include <markupfiltmgr.h>
+#include <string>
+#include <swdisp.h>
 #include <swmgr.h>
 #include <swmodule.h>
-#include <markupfiltmgr.h>
-#include <listkey.h>
 #include <versekey.h>
-#include <swdisp.h>
-#include <string>
 
 class SwordFuncs {
- private:
+private:
   sword::SWMgr *manager;
   sword::SWModule *module;
   sword::VerseKey vkey;
@@ -39,11 +39,10 @@ class SwordFuncs {
   /* Initialize module for use. Called by all constructors. */
   void SetModule(std::string);
 
-
- protected:
+protected:
   // For derived classes
 
- public:
+public:
   SwordFuncs();
   explicit SwordFuncs(std::string);
   virtual ~SwordFuncs();
@@ -67,7 +66,7 @@ class SwordFuncs {
    *  - Change active module
    *  - Lookup verse reference
    */
-  std::string parseInput(char * input);
+  std::string parseInput(char *input);
 
   /* Look up Scripture reference. */
   std::string lookup(std::string);
@@ -76,6 +75,14 @@ class SwordFuncs {
    * (such as the Sword Personal commentary module).
    */
   bool makeEntry(std::string ref, std::string input);
+
+  /* Clear a commentary note from a reference.
+   */
+  bool clearEntry(std::string ref);
+
+  /* Search function. */
+  sword::ListKey search(int type, std::string search_terms,
+                        std::string search_scope);
 };
 
 #endif // SWORDFUNCS_HPP
