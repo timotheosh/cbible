@@ -15,37 +15,36 @@
  *
  */
 
+#include "Options.hpp"
+#include "thirdparty/INIReader.h"
+#include "thirdparty/optionparser.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <iostream>
-#include <string>
-#include <sstream>
 #include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
 #include <vector>
-#include "thirdparty/optionparser.h"
-#include "thirdparty/INIReader.h"
-#include "Options.hpp"
 
 #define PROGNAME "cbible"
 
-struct Arg: public option::Arg {
-  static void printError(const char* msg1, const option::Option& opt,
-                         const char* msg2) {
+struct Arg : public option::Arg {
+  static void printError(const char *msg1, const option::Option &opt,
+                         const char *msg2) {
     fprintf(stderr, "%s", msg1);
     fwrite(opt.name, opt.namelen, 1, stderr);
     fprintf(stderr, "%s", msg2);
   }
 
-
-  static option::ArgStatus Unknown(const option::Option& option, bool msg) {
-    if (msg) printError("Unknown option '", option, "'\n");
+  static option::ArgStatus Unknown(const option::Option &option, bool msg) {
+    if (msg)
+      printError("Unknown option '", option, "'\n");
     return option::ARG_ILLEGAL;
   }
 
-
-  static option::ArgStatus NonEmpty(const option::Option& option, bool msg) {
-  /* These option keys will always exist, we'll only need to check them. */
+  static option::ArgStatus NonEmpty(const option::Option &option, bool msg) {
+    /* These option keys will always exist, we'll only need to check them. */
 
     if (option.arg != 0 && option.arg[0] != 0)
       return option::ARG_OK;
@@ -60,35 +59,45 @@ struct Arg: public option::Arg {
   }
 };
 
-enum optionIndex { UNKNOWN, HELP, VERSION, CONFIG, VERSENUMBERS, INPUT,
-                   BIBLEVERSION, REFERENCE};
-
-const option::Descriptor usage[] = {
-  {UNKNOWN, 0, "", "", option::Arg::None,
-   "Usage: " PROGNAME " <options>\n\n" "Options:" },
-  {HELP, 0, "h", "help", option::Arg::None,
-   "  -h [ --help ]  \tProduce help message"},
-  {VERSION, 0, "v", "version", option::Arg::None,
-   "  -v [ --version ]  \tPrint version string"},
-  {CONFIG, 0, "c", "config", Arg::NonEmpty,
-   "  -c [ --config ]  <path>  \tPath for a configuration file"},
-  {VERSENUMBERS, 0, "n", "versenumbers", option::Arg::None,
-   "  -n [ --versenumbers ]  \tShow output with verse numbers"},
-  {INPUT, 0, "i", "input", option::Arg::None,
-   "Send stdin to personal commentary (must be used with -r)."},
-  {BIBLEVERSION, 0, "b", "bibleversion", Arg::NonEmpty,
-   "  -b [ --bibleversion ] <bible version>  \tBible version "
-   "(using Sword's 3 letter acronym)"},
-  {REFERENCE, 0, "r", "reference", Arg::NonEmpty,
-   "  -r [ --reference ] <reference>  \tScripture reference to look up"},
-  {0, 0, 0, 0, 0, 0}
+enum optionIndex {
+  UNKNOWN,
+  HELP,
+  VERSION,
+  CONFIG,
+  VERSENUMBERS,
+  INPUT,
+  EMPTY,
+  BIBLEVERSION,
+  REFERENCE
 };
 
-
+const option::Descriptor usage[] = {
+    {UNKNOWN, 0, "", "", option::Arg::None,
+     "Usage: " PROGNAME " <options>\n\n"
+     "Options:"},
+    {HELP, 0, "h", "help", option::Arg::None,
+     "  -h [ --help ]  \tProduce help message"},
+    {VERSION, 0, "v", "version", option::Arg::None,
+     "  -v [ --version ]  \tPrint version string"},
+    {CONFIG, 0, "c", "config", Arg::NonEmpty,
+     "  -c [ --config ]  <path>  \tPath for a configuration file"},
+    {VERSENUMBERS, 0, "n", "versenumbers", option::Arg::None,
+     "  -n [ --versenumbers ]  \tShow output with verse numbers"},
+    {INPUT, 0, "i", "input", option::Arg::None,
+     "Send stdin to personal commentary (must be used with -r)."},
+    {EMPTY, 0, "e", "empty", option::Arg::None,
+     "  -e [ --empty ] \tClear all comments in personal commentary for the given reference (must be used with -r)."},
+    {BIBLEVERSION, 0, "b", "bibleversion", Arg::NonEmpty,
+     "  -b [ --bibleversion ] <bible version>  \tBible version "
+     "(using Sword's 3 letter acronym)"},
+    {REFERENCE, 0, "r", "reference", Arg::NonEmpty,
+     "  -r [ --reference ] <reference>  \tScripture reference to look up"},
+    {0, 0, 0, 0, 0, 0}};
 
 Options::Options(int argc, char *argv[]) {
-  argc -= (argc > 0); argv += (argc > 0);  // skip program name argv[0]
-  option::Stats  stats(usage, argc, argv);
+  argc -= (argc > 0);
+  argv += (argc > 0); // skip program name argv[0]
+  option::Stats stats(usage, argc, argv);
   std::vector<option::Option> options(stats.options_max);
   std::vector<option::Option> buffer(stats.buffer_max);
   option::Parser parse(usage, argc, argv, &options[0], &buffer[0]);
@@ -128,16 +137,29 @@ Options::Options(int argc, char *argv[]) {
     if (options[INPUT]) {
       if (!options[REFERENCE]) {
         std::cerr << "-i input option cannot be used without a -r reference "
-                  << "(\"You want me to put this... where?\")" <<std::endl;
+                  << "(\"You want me to put this... where?\")" << std::endl;
+      } else if (options[EMPTY]) {
+        std::cerr << "-i and and -e cannot be used together! "
+                  << "(\"Add a comment but delete eveyrthing? "
+                  << "Delete everything first, then add a new comment."
+                  << std::endl;
       } else {
         Options::opts["input"] = "input";
       }
     }
-  }  // end else
+
+    if (options[EMPTY]) {
+      if (!options[REFERENCE]) {
+        std::cerr << "-e option cannot be used without a -r reference "
+                  << "(\"You want me to empty what... where?\")" << std::endl;
+      } else {
+        Options::opts["empty"] = "empty";
+      }
+    }
+  } // end else
 }
 
-Options::~Options() {
-}
+Options::~Options() {}
 
 void Options::readIni() {
   /**
@@ -184,8 +206,8 @@ void Options::createConfig() {
           "Cannot open non-existent config file for writing.");
     }
   } catch (std::exception &e) {
-    std::cerr << "Exception thrown during config file creation: "
-              << e.what() << std::endl;
+    std::cerr << "Exception thrown during config file creation: " << e.what()
+              << std::endl;
   } catch (...) {
     std::cerr << "Unknown Exception thrown during config file creation."
               << std::endl;
@@ -193,9 +215,7 @@ void Options::createConfig() {
   ofs.close();
 }
 
-std::string Options::getOption(std::string opt) {
-  return Options::opts[opt];
-}
+std::string Options::getOption(std::string opt) { return Options::opts[opt]; }
 
 std::string Options::getOption(const char *opt) {
   std::string s = opt;

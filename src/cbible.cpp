@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Tim Hawes <tim@selfdidactic.com>
+ * Copyright 2017 Tim Hawes <tim@selfdidactic.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,17 @@
  *
  */
 
-#include <stdio.h>
-#include <readline/readline.h>
+#include "Options.hpp"
+#include "SwordFuncs.hpp"
+#include <cstdio>
+#include <exception>
+#include <iostream>
 #include <readline/history.h>
+#include <readline/readline.h>
+#include <sstream>
+#include <string>
 #include <sys/ioctl.h>
 #include <unistd.h>
-#include <iostream>
-#include <string>
-#include <sstream>
-#include <exception>
-#include "SwordFuncs.hpp"
-#include "Options.hpp"
 
 #define CBIBLE_VERSION "0.20"
 
@@ -38,14 +38,15 @@ int main(int argc, char *argv[]) {
   std::string reference = options.getOption("reference");
   std::string versenumbers = options.getOption("versenumbers");
   std::string inputtext = options.getOption("input");
+  std::string empty = options.getOption("empty");
 
   /* Display usage and exit */
   if (!help.empty()) {
     std::cout << help << std::endl;
-    return(0);
+    return (0);
   } else if (!options.getOption("version").empty()) {
     std::cout << "cbible Version " << CBIBLE_VERSION << std::endl;
-    return(0);
+    return (0);
   }
   if (bibleversion.empty())
     bibleversion = "KJV";
@@ -55,14 +56,14 @@ int main(int argc, char *argv[]) {
   /* Use interactive mode */
   if (reference.empty()) {
     char *buf;
-    rl_bind_key('\t', rl_abort);  // disable auto-complete
+    rl_bind_key('\t', rl_abort); // disable auto-complete
 
     try {
       OutputText(sw->parseInput(const_cast<char *>("Gen 1:1")));
-      while ((buf = readline(("bible(" + sw->modname() + ") ["
-                              + sw->currentRef() + "]> ").c_str())) != NULL) {
-        if ((strcmp(buf, "quit") == 0) ||
-            (strcmp(buf, "q") == 0))
+      while ((buf = readline(
+                  ("bible(" + sw->modname() + ") [" + sw->currentRef() + "]> ")
+                      .c_str())) != NULL) {
+        if ((strcmp(buf, "quit") == 0) || (strcmp(buf, "q") == 0))
           break;
 
         try {
@@ -79,6 +80,9 @@ int main(int argc, char *argv[]) {
     }
     free(buf);
   } else {
+    /* check if we are to empty */
+    if (!empty.empty())
+      sw->clearEntry(reference);
     /* Lookup the reference and exit. */
     if (versenumbers.empty()) {
       sw->versification(false);
@@ -88,7 +92,7 @@ int main(int argc, char *argv[]) {
     } else {
       std::string line;
       std::stringstream is;
-      while ( std::getline(std::cin, line) ) {
+      while (std::getline(std::cin, line)) {
         is << line << std::endl;
       }
       sw->makeEntry(reference, is.str());
@@ -98,7 +102,6 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 
-
 void OutputText(std::string s) {
   struct winsize w;
   ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
@@ -107,8 +110,8 @@ void OutputText(std::string s) {
 
   /* If executed from Emacs' eshell, bufferWidth will be 0. */
   if (bufferWidth > 0) {
-    for (unsigned int i = 1; i <= s.length() ; i++) {
-      char c = s[i-1];
+    for (unsigned int i = 1; i <= s.length(); i++) {
+      char c = s[i - 1];
 
       int spaceCount = 0;
 
@@ -117,15 +120,15 @@ void OutputText(std::string s) {
         int charNumOnLine = ((i) % bufferWidth);
         spaceCount = bufferWidth - charNumOnLine;
         /* insert space before newline break */
-        s.insert((i-1), (spaceCount), ' ');
+        s.insert((i - 1), (spaceCount), ' ');
         /* jump forward in string to character at beginning of next line. */
-        i+=(spaceCount);
+        i += (spaceCount);
         continue;
       }
 
       if ((i % bufferWidth) == 0) {
         if (c != ' ') {
-          for (int j = (i-1); j > -1 ; j--) {
+          for (int j = (i - 1); j > -1; j--) {
             if (s[j] == ' ') {
               s.insert(j, spaceCount, ' ');
               break;

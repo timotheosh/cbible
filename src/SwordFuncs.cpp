@@ -15,22 +15,21 @@
  *
  */
 
-#include <swmgr.h>
-#include <swmodule.h>
-#include <markupfiltmgr.h>
-#include <listkey.h>
-#include <versekey.h>
-#include <swdisp.h>
 #include <cstdint>
-#include <cstdlib>
 #include <cstdio>
+#include <cstdlib>
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <sword/listkey.h>
+#include <sword/markupfiltmgr.h>
+#include <sword/swdisp.h>
+#include <sword/swmgr.h>
+#include <sword/swmodule.h>
+#include <sword/versekey.h>
 
-#include "utilities.hpp"
 #include "SwordFuncs.hpp"
-
+#include "utilities.hpp"
 
 SwordFuncs::SwordFuncs() {
   if (mod_name.empty())
@@ -61,9 +60,7 @@ void SwordFuncs::SetModule(std::string module_name) {
   }
 }
 
-void SwordFuncs::versification(bool on) {
-  versenum = on;
-}
+void SwordFuncs::versification(bool on) { versenum = on; }
 
 std::string SwordFuncs::currentRef() {
   std::string ret = vkey.getText();
@@ -81,13 +78,17 @@ std::string SwordFuncs::currentText() {
   if (versenum) {
     os << " " << vkey.getVerse();
   }
-  os <<  " " << trim(text);
+  os << " " << trim(text);
   return os.str();
 }
 
-std::string SwordFuncs::parseInput(char * input) {
+std::string SwordFuncs::parseInput(char *input) {
   std::string str = input;
-  if (str.compare(0, 1, "?") == 0) {
+  if (str.compare(0, 2, "??") == 0) {
+    std::cout << "perform global search" << std::endl;
+  } else if (str.compare(0, 1, "?") == 0) {
+    std::cout << "perform search within module" << std::endl;
+  } else if (str.compare(0, 1, "!") == 0) {
     std::string mod = str.substr(1);
     trim(mod);
     SetModule(mod);
@@ -111,9 +112,7 @@ std::string SwordFuncs::listModules() {
   return ss.str();
 }
 
-std::string SwordFuncs::modname() {
-  return mod_name;
-}
+std::string SwordFuncs::modname() { return mod_name; }
 
 std::string SwordFuncs::lookup(std::string ref) {
   std::ostringstream output;
@@ -141,14 +140,14 @@ std::string SwordFuncs::lookup(std::string ref) {
     if (i > 1)
       output << std::endl << module->getKey()->getRangeText();
     vkey = module->getKey();
-  } catch(const std::runtime_error& re) {
+  } catch (const std::runtime_error &re) {
     // speciffic handling for runtime_error
     std::cerr << "Runtime error: " << re.what() << std::endl;
-  } catch(const std::exception& ex) {
+  } catch (const std::exception &ex) {
     // speciffic handling for all exceptions extending std::exception, except
     // std::runtime_error which is handled explicitly
     std::cerr << "Error occurred: " << ex.what() << std::endl;
-  } catch(...) {
+  } catch (...) {
     // catch any other errors (that we have no information about)
     std::cerr << "Unknown failure occured. Possible memory corruption"
               << std::endl;
@@ -159,11 +158,39 @@ std::string SwordFuncs::lookup(std::string ref) {
 bool SwordFuncs::makeEntry(std::string ref, std::string input) {
   bool ret = module->isWritable();
   if (ret) {
+
+    // Set the key according to the reference.
     vkey.setText(const_cast<char *>(ref.c_str()));
     module->setKey(vkey);
-    const char* data = const_cast<char *>(input.c_str());
-    int64_t length = input.length();
-    module->setEntry(data, length);
+
+    // Check for any exisitng comments
+    std::string ctext = currentText(); //trim(s1);
+    std::string data;
+
+    if (ctext.empty()) {
+      data = input;
+    } else {
+      data = ctext + "<br/><br/>\n\n" + input;
+    }
+    const char *entry = const_cast<char *>(data.c_str());
+    int64_t length = data.length();
+    module->setEntry(entry, length);
   }
   return ret;
+}
+
+bool SwordFuncs::clearEntry(std::string ref) {
+  bool ret = module->isWritable();
+  if (ret) {
+    vkey.setText(const_cast<char *>(ref.c_str()));
+    module->setKey(vkey);
+    module->setEntry("", 0);
+  }
+  return ret;
+}
+
+sword::ListKey SwordFuncs::search(int type, std::string search_terms,
+                                  std::string search_scope) {
+  sword::SWKey *key;
+  return module->search(const_cast<char *>(search_terms.c_str()), type, 0, key);
 }

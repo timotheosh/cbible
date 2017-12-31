@@ -27,11 +27,11 @@
 #define DEFAULT_VERSION "KJV"
 #define DEFAULT_REFERENCE "Gen 1:1"
 
-#include <string>
 #include <map>
+#include <string>
 
 class Options {
- private:
+private:
   /* Vars for holding the option data for cbible */
   std::map<std::string, std::string> opts;
 
@@ -44,11 +44,11 @@ class Options {
   /* Checks for existence of default config file. */
   void checkConfig();
 
- public:
+public:
   Options(int argc, char *argv[]);
   ~Options();
   std::string getOption(std::string);
   std::string getOption(const char *);
 };
 
-#endif  // OPTIONS_HPP
+#endif // OPTIONS_HPP
