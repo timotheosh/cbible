@@ -5,7 +5,7 @@ link_directories("/usr/lib")
 set(cbible_sources ${CMAKE_CURRENT_SOURCE_DIR}/src/Options.cpp
                    ${CMAKE_CURRENT_SOURCE_DIR}/src/SwordFuncs.cpp
                    ${CMAKE_CURRENT_SOURCE_DIR}/src/cbible.cpp)
-set(gcc_cflags "-g3 -std=c++11")
+set(gcc_cflags "-O0 -g3 -std=c++11")
 set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${gcc_cflags}")
 set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${gcc_cflags}")
 add_executable(cbible ${cbible_sources})

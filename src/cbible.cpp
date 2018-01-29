@@ -98,7 +98,7 @@ int main(int argc, char *argv[]) {
       sw->makeEntry(reference, is.str());
     }
   }
-  free(sw);
+  delete sw;
   return 0;
 }
 

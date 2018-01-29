@@ -43,8 +43,7 @@ SwordFuncs::SwordFuncs(std::string module_name) {
 }
 
 SwordFuncs::~SwordFuncs() {
-  free(module);
-  free(manager);
+  delete manager;
 }
 
 void SwordFuncs::SetModule(std::string module_name) {
