@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Tim Hawes <tim@selfdidactic.com>
+ * Copyright 2020 Tim Hawes <tim@selfdidactic.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,14 +32,11 @@
 #include "utilities.hpp"
 
 SwordFuncs::SwordFuncs() {
-  if (mod_name.empty())
-    mod_name = "KJV";
-  SetModule(mod_name);
+  SetModule("KJV");
 }
 
 SwordFuncs::SwordFuncs(std::string module_name) {
-  mod_name = module_name;
-  SetModule(mod_name);
+  SetModule(module_name);
 }
 
 SwordFuncs::~SwordFuncs() {
@@ -51,20 +48,23 @@ void SwordFuncs::SetModule(std::string module_name) {
   module = manager->getModule(module_name.c_str());
 
   if (!module) {
-    module = manager->getModule(mod_name.c_str());
     std::cout << listModules() << std::endl;
   } else {
-    module->setKey(vkey);
     mod_name = module_name;
+    module->setKey(vkey);
   }
 }
 
 void SwordFuncs::versification(bool on) { versenum = on; }
 
+bool SwordFuncs::validModule() {
+  return (module != NULL);
+}
+
 std::string SwordFuncs::currentRef() {
   std::string ret = vkey.getText();
   if (ret.empty())
-    ret = "foo";
+    ret = "<EMPTY>";
   return ret;
 }
 

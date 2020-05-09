@@ -14,3 +14,5 @@ GPATH
 GRTAGS
 GTAGS
 GSYMS
+.idea/
+cmake-build-debug/

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Tim Hawes <tim@selfdidactic.com>
+ * Copyright 2020 Tim Hawes <tim@selfdidactic.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,8 @@ public:
    * @params on Boolean that turns on/off versification for output.
    */
   void versification(bool on);
+
+  bool validModule();
 
   /* Return current Scripture reference. */
   std::string currentRef();

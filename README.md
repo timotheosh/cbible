@@ -23,9 +23,9 @@ Requires:
   * GNU readline library
   * Cmake 2.8 or greater
 
-On Ubuntu 16.04, you can install these requirements with:
+On Ubuntu 18.04, you can install these requirements with:
 ```
-sudo apt-get install build-essentials libsword-dev libreadline-dev cmake
+sudo apt-get install build-essential libsword-dev libreadline-dev cmake
 ```
 
 NOTE: If you are new to Crosswire's libsword, it is highly recommended
@@ -40,8 +40,7 @@ size.
 Current Features
 
 * Uses a config file for setting the default Bible version (single
-  user, only, in ~/.cbible.cfg). The config file is created when the
-  program is used for the first time.
+  user, only, in ~/.cbible.cfg). Its in a format like `bibleversion=KJV`
 
 * The ability to write and retrieve entries in the Sword Project's
   Personal commentary.

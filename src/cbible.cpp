@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Tim Hawes <tim@selfdidactic.com>
+ * Copyright 2020 Tim Hawes <tim@selfdidactic.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,9 @@ int main(int argc, char *argv[]) {
     bibleversion = "KJV";
 
   SwordFuncs *sw = new SwordFuncs(bibleversion);
+
+  if (!sw->validModule())
+    return(1);
 
   /* Use interactive mode */
   if (reference.empty()) {
