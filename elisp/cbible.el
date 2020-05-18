@@ -45,9 +45,9 @@
   :group 'cbible
   )
 
-(defun cbible-reference (version reference)
-  "Function for looking up Bible passages. Send first value as a
-   nil or empty string to use default version."
+(defun cbible-reference (reference &optional version)
+  "Function for looking up Bible passages. If version is ommitted,
+   it will use default version."
   (if (and version (> (length version) 0))
       (setq bibver version)
     (setq bibver bibleversion))
@@ -61,7 +61,7 @@
   (interactive)
   (setq version (read-from-minibuffer "Bible Version: "))
   (setq ref (read-from-minibuffer "Reference: "))
-  (insert (cbible-reference version ref)))
+  (insert (cbible-reference ref version)))
 
 (defun cbible-make-entry(entry)
   "Function for creating a Personal commentary entry."
