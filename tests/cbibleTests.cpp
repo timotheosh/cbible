@@ -4,6 +4,8 @@
 #include "utilities.hpp"
 
 #include <catch2/catch_test_macros.hpp>
+#include <cstdlib>
+#include <filesystem>
 #include <string>
 #include <vector>
 
@@ -14,6 +16,25 @@ Options parse(std::vector<std::string> arguments) {
   for (auto &argument : arguments) argv.push_back(argument.data());
   return {static_cast<int>(argv.size()), argv.data()};
 }
+
+class EmptyHome final {
+public:
+  EmptyHome() : path{std::filesystem::current_path() / ".cbible-options-test-home"} {
+    if (const char *value = std::getenv("HOME")) original = value;
+    std::filesystem::remove_all(path);
+    std::filesystem::create_directory(path);
+    setenv("HOME", path.c_str(), 1);
+  }
+  ~EmptyHome() {
+    if (original.empty()) unsetenv("HOME");
+    else setenv("HOME", original.c_str(), 1);
+    std::filesystem::remove_all(path);
+  }
+
+private:
+  std::filesystem::path path;
+  std::string original;
+};
 } // namespace
 
 TEST_CASE("string utilities are safe and deterministic") {
@@ -24,7 +45,8 @@ TEST_CASE("string utilities are safe and deterministic") {
 }
 
 TEST_CASE("options preserve defaults and validate combinations") {
-  CHECK(parse({"cbible", "-r", "Gen 1:1"}).getOption("bibleversion") == "KJV");
+  const EmptyHome empty_home;
+  CHECK(parse({"cbible", "-r", "Gen 1:1"}).getOption("bibleversion").empty());
   CHECK(parse({"cbible", "-b", "Personal", "-r", "Gen 1:1"}).getOption("bibleversion") == "Personal");
   CHECK(parse({"cbible", "--bibleversion=Personal", "--reference=Gen 1:1"}).getOption("reference") == "Gen 1:1");
   CHECK_FALSE(parse({"cbible", "--input"}).valid());
@@ -49,6 +71,15 @@ TEST_CASE("failed module switch is transactional") {
   CHECK_THROWS_AS(sword.parseInput("!DoesNotExist"), std::invalid_argument);
   CHECK(sword.modname() == "KJV");
   CHECK(sword.lookup("Gen 1:1").find("In the beginning") != std::string::npos);
+}
+
+TEST_CASE("installed Bible versions exclude commentary and need no selection") {
+  SwordFuncs sword;
+  CHECK_FALSE(sword.validModule());
+  CHECK(sword.listBibleVersions().find("KJV - ") != std::string::npos);
+  CHECK(sword.listBibleVersions().find("Personal") == std::string::npos);
+  CHECK_FALSE(sword.setModule("DoesNotExist"));
+  CHECK(sword.listBibleVersions().find("KJV - ") != std::string::npos);
 }
 
 TEST_CASE("interactive core advances and reserves search commands") {

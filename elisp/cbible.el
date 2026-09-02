@@ -1,7 +1,7 @@
 ;;; cbible.el --- SWORD Bible lookup and commentary integration -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2015-2026 Tim Hawes
-;; Version: 0.20
+;; Version: 0.21
 ;; Keywords: tools, bible
 
 ;;; Commentary:

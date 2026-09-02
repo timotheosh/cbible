@@ -15,17 +15,15 @@ public:
 };
 } // namespace
 
-SwordFuncs::SwordFuncs() { setModule("KJV"); }
-SwordFuncs::SwordFuncs(std::string module_name) { setModule(module_name); }
+SwordFuncs::SwordFuncs()
+    : manager(std::make_unique<sword::SWMgr>(new sword::MarkupFilterMgr(sword::FMT_PLAIN))) {}
+SwordFuncs::SwordFuncs(std::string module_name) : SwordFuncs() { setModule(module_name); }
 
 bool SwordFuncs::setModule(const std::string_view module_name) {
-  auto candidate = std::make_unique<sword::SWMgr>(
-      new sword::MarkupFilterMgr(sword::FMT_PLAIN));
-  auto *candidate_module = candidate->getModule(std::string{module_name}.c_str());
+  auto *candidate_module = manager->getModule(std::string{module_name}.c_str());
   if (candidate_module == nullptr) return false;
 
   candidate_module->setKey(vkey);
-  manager = std::move(candidate);
   module = candidate_module;
   mod_name = module_name;
   return true;
@@ -69,13 +67,16 @@ std::string SwordFuncs::parseInput(const std::string_view input) {
   return lookup(command);
 }
 
-std::string SwordFuncs::listModules() {
-  if (manager == nullptr) return {};
+std::string SwordFuncs::listBibleVersions() const {
   std::ostringstream output;
   for (const auto &[name, available_module] : manager->Modules) {
-    output << '[' << name << "]\t - " << available_module->getDescription() << '\n';
+    if (std::string_view{available_module->getType()} == "Biblical Texts") {
+      output << "  " << name << " - " << available_module->getDescription() << '\n';
+    }
   }
-  return output.str();
+  if (output.str().empty()) return "No SWORD Bible versions are installed.\nInstall a Biblical Text module with a SWORD-compatible module manager.\n";
+  return "Installed Bible versions:\n" + output.str() +
+         "\nSelect one with -b MODULE or set bible_version in ~/.cbible.toml.\n";
 }
 
 const std::string &SwordFuncs::modname() const noexcept { return mod_name; }

@@ -1,13 +1,14 @@
 #include "Options.hpp"
-#include "thirdparty/INIReader.h"
+#include <toml.hpp>
 
 #include <cstdlib>
+#include <filesystem>
+#include <sstream>
 #include <string_view>
 #include <utility>
 
 namespace {
-constexpr std::string_view config_file = ".cbible.cfg";
-constexpr std::string_view default_version = "KJV";
+constexpr std::string_view config_file = ".cbible.toml";
 
 std::string usage() {
   return "Usage: cbible <options>\n\nOptions:\n"
@@ -30,6 +31,7 @@ Options::Options(int argc, char *argv[]) {
   opts["config"] = opts["default_configfile"];
 
   bool bible_version_set = false;
+  bool explicit_config = false;
   auto fail = [this](std::string message) {
     valid_ = false;
     error_ = std::move(message);
@@ -49,8 +51,12 @@ Options::Options(int argc, char *argv[]) {
     else if (arg == "-n" || arg == "--versenumbers") opts["versenumbers"] = "versenumbers";
     else if (arg == "-i" || arg == "--input") opts["input"] = "input";
     else if (arg == "-e" || arg == "--empty") opts["empty"] = "empty";
-    else if (arg == "-c" || arg == "--config") opts["config"] = value(i, arg);
+    else if (arg == "-c" || arg == "--config") {
+      explicit_config = true;
+      opts["config"] = value(i, arg);
+    }
     else if (arg.starts_with("--config=")) {
+      explicit_config = true;
       opts["config"] = std::string{arg.substr(9)};
       if (opts["config"].empty()) fail("Option '--config' requires a non-empty argument");
     }
@@ -70,17 +76,39 @@ Options::Options(int argc, char *argv[]) {
   }
 
   if (!valid_ || !opts["help"].empty() || !opts["version"].empty()) return;
-  if (!bible_version_set) readIni();
-  if (opts["bibleversion"].empty()) opts["bibleversion"] = default_version;
+  const std::string selected_version = opts["bibleversion"];
+  readToml(explicit_config);
+  if (!valid_) return;
+  if (bible_version_set) opts["bibleversion"] = selected_version;
   if (!opts["input"].empty() && opts["reference"].empty()) fail("--input requires --reference");
   else if (!opts["empty"].empty() && opts["reference"].empty()) fail("--empty requires --reference");
   else if (!opts["input"].empty() && !opts["empty"].empty()) fail("--input and --empty cannot be used together");
 }
 
-void Options::readIni() {
-  INIReader reader(opts["config"]);
-  if (reader.ParseError() >= 0) {
-    opts["bibleversion"] = reader.Get("", "bibleversion", std::string{default_version});
+void Options::readToml(bool explicit_config) {
+  try {
+    std::error_code error;
+    const bool exists = std::filesystem::exists(opts["config"], error);
+    if (!explicit_config && !exists && !error) return;
+    const auto config = toml::parse_file(opts["config"]);
+    for (const auto &[key, node] : config) {
+      if (key.str() != "bible_version") {
+        throw std::invalid_argument("Unknown configuration key '" + std::string{key.str()} + "'");
+      }
+      const auto version = node.value<std::string>();
+      if (!version || version->find_first_not_of(" \t\r\n") == std::string::npos) {
+        throw std::invalid_argument("bible_version must be a non-empty string");
+      }
+      opts["bibleversion"] = *version;
+    }
+  } catch (const toml::parse_error &error) {
+    valid_ = false;
+    std::ostringstream message;
+    message << "Cannot read TOML configuration '" << opts["config"] << "': " << error;
+    error_ = message.str();
+  } catch (const std::exception &error) {
+    valid_ = false;
+    error_ = "Invalid configuration '" + opts["config"] + "': " + error.what();
   }
 }
 

@@ -16,7 +16,7 @@
  * Class Options
  *
  * Description: Handles options for running the cbible application. It
- * handles both a configuration from an ini file and command line
+ * handles both a configuration from a TOML file and command line
  * options.
  */
 
@@ -31,7 +31,7 @@ private:
   /* Vars for holding the option data for cbible */
   std::map<std::string, std::string> opts;
 
-  void readIni();
+  void readToml(bool explicit_config);
   bool valid_ = true;
   std::string error_;
 

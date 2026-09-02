@@ -1,0 +1,4 @@
+# Copy to ~/.cbible.toml to select your default installed SWORD module.
+# Run cbible without a configuration or -b to list installed Bible versions.
+# Command-line -b overrides this setting.
+bible_version = "KJV"

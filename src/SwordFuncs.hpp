@@ -34,10 +34,6 @@ private:
   std::string mod_name;
   bool versenum = true;
 
-  std::string listModules();
-
-  /* Initialize module for use. Called by all constructors. */
-  bool setModule(std::string_view);
 
 protected:
   // For derived classes
@@ -46,6 +42,8 @@ public:
   SwordFuncs();
   explicit SwordFuncs(std::string);
   virtual ~SwordFuncs() = default;
+  bool setModule(std::string_view);
+  [[nodiscard]] std::string listBibleVersions() const;
 
   /**
    * Turn on/off versification for output.
