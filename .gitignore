@@ -16,3 +16,4 @@ GTAGS
 GSYMS
 .idea/
 cmake-build-debug/
+reports/

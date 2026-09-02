@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    continue-on-error: ${{ matrix.os == 'ubuntu-26.04' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-26.04]
+        compiler: [gcc, clang]
+    runs-on: ${{ matrix.os }}
+    env:
+      CXX: ${{ matrix.compiler == 'clang' && 'clang++' || 'g++' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y libsword-dev libreadline-dev ninja-build emacs-nox
+      - uses: actions/cache@v4
+        with:
+          path: build/ci/_deps
+          key: catch2-${{ runner.os }}-${{ matrix.os }}-${{ hashFiles('tests/CMakeLists.txt') }}
+      - name: Configure
+        run: cmake -S . -B build/ci -G Ninja -DCMAKE_BUILD_TYPE=Release -DCBIBLE_WARNINGS_AS_ERRORS=ON
+      - name: Build
+        run: cmake --build build/ci
+      - name: Test
+        run: ctest --test-dir build/ci --output-on-failure
+
+  sanitizers:
+    runs-on: ubuntu-24.04
+    env:
+      CXX: clang++
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y libsword-dev libreadline-dev ninja-build emacs-nox
+      - name: Configure
+        run: cmake -S . -B build/sanitizers -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCBIBLE_ENABLE_SANITIZERS=ON -DCBIBLE_WARNINGS_AS_ERRORS=ON
+      - name: Build
+        run: cmake --build build/sanitizers
+      - name: Test
+        run: ctest --test-dir build/sanitizers --output-on-failure

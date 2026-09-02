@@ -18,9 +18,9 @@
 #ifndef SWORDFUNCS_HPP
 #define SWORDFUNCS_HPP
 
-#include <listkey.h>
-#include <markupfiltmgr.h>
+#include <memory>
 #include <string>
+#include <string_view>
 #include <swdisp.h>
 #include <swmgr.h>
 #include <swmodule.h>
@@ -28,8 +28,8 @@
 
 class SwordFuncs {
 private:
-  sword::SWMgr *manager;
-  sword::SWModule *module;
+  std::unique_ptr<sword::SWMgr> manager;
+  sword::SWModule *module = nullptr;
   sword::VerseKey vkey;
   std::string mod_name;
   bool versenum = true;
@@ -37,7 +37,7 @@ private:
   std::string listModules();
 
   /* Initialize module for use. Called by all constructors. */
-  void SetModule(std::string);
+  bool setModule(std::string_view);
 
 protected:
   // For derived classes
@@ -45,7 +45,7 @@ protected:
 public:
   SwordFuncs();
   explicit SwordFuncs(std::string);
-  virtual ~SwordFuncs();
+  virtual ~SwordFuncs() = default;
 
   /**
    * Turn on/off versification for output.
@@ -53,38 +53,34 @@ public:
    */
   void versification(bool on);
 
-  bool validModule();
+  [[nodiscard]] bool validModule() const noexcept;
 
   /* Return current Scripture reference. */
-  std::string currentRef();
+  [[nodiscard]] std::string currentRef() const;
 
   /* Return current Scripture Text. */
-  std::string currentText();
+  [[nodiscard]] std::string currentText();
 
   /* Return the current module name */
-  std::string modname();
+  [[nodiscard]] const std::string &modname() const noexcept;
 
   /* Parse input:
    *  - Change active module
    *  - Lookup verse reference
    */
-  std::string parseInput(char *input);
+  std::string parseInput(std::string_view input);
 
   /* Look up Scripture reference. */
-  std::string lookup(std::string);
+  std::string lookup(std::string_view);
 
   /* Write an entry in commentary. Module has to be set to a writable module
    * (such as the Sword Personal commentary module).
    */
-  bool makeEntry(std::string ref, std::string input);
+  bool makeEntry(std::string_view ref, std::string_view input);
 
   /* Clear a commentary note from a reference.
    */
-  bool clearEntry(std::string ref);
-
-  /* Search function. */
-  sword::ListKey search(int type, std::string search_terms,
-                        std::string search_scope);
+  bool clearEntry(std::string_view ref);
 };
 
 #endif // SWORDFUNCS_HPP
