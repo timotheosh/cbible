@@ -13,6 +13,8 @@ pkg_check_modules(READLINE REQUIRED IMPORTED_TARGET readline)
 
 add_library(cbible_core src/Options.cpp src/SwordFuncs.cpp src/Output.cpp)
 target_include_directories(cbible_core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
+target_include_directories(cbible_core SYSTEM PRIVATE
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/thirdparty")
 target_compile_features(cbible_core PUBLIC cxx_std_20)
 target_link_libraries(cbible_core PUBLIC PkgConfig::SWORD)
 

@@ -21,10 +21,9 @@ target_link_libraries(cbibleTests PRIVATE cbible_core Catch2::Catch2WithMain)
 target_compile_options(cbibleTests PRIVATE -Wall -Wextra -Wpedantic -Wconversion -Wshadow)
 
 include(Catch)
-file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/empty-home")
 catch_discover_tests(cbibleTests
   DISCOVERY_MODE PRE_TEST
-  PROPERTIES ENVIRONMENT "SWORD_PATH=${CMAKE_CURRENT_BINARY_DIR}/fixtures/sword;HOME=${CMAKE_CURRENT_BINARY_DIR}/empty-home")
+  PROPERTIES ENVIRONMENT "SWORD_PATH=${CMAKE_CURRENT_BINARY_DIR}/fixtures/sword")
 
 add_test(NAME cli-compatibility
   COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/cli_tests.sh" "$<TARGET_FILE:cbible>"

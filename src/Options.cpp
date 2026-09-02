@@ -1,5 +1,5 @@
 #include "Options.hpp"
-#include "thirdparty/toml.hpp"
+#include <toml.hpp>
 
 #include <cstdlib>
 #include <filesystem>
