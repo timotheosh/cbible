@@ -157,11 +157,18 @@ inline static char* find_chars_or_comment(const char* s, const char* chars)
     return (char*)s;
 }
 
-/* Version of strncpy that ensures dest (size bytes) is null-terminated. */
+/* Bounded copy that ensures dest (size bytes) is null-terminated. */
 inline static char* strncpy0(char* dest, const char* src, size_t size)
 {
-    strncpy(dest, src, size);
-    dest[size - 1] = '\0';
+    if (size == 0)
+        return dest;
+
+    size_t index = 0;
+    while (index + 1 < size && src[index] != '\0') {
+        dest[index] = src[index];
+        index++;
+    }
+    dest[index] = '\0';
     return dest;
 }
 
