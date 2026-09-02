@@ -66,9 +66,14 @@ int main(int argc, char *argv[]) {
   }
 
   try {
-    SwordFuncs sword{options.getOption("bibleversion")};
-    if (!sword.validModule()) {
+    SwordFuncs sword;
+    if (options.getOption("bibleversion").empty()) {
+      std::cout << sword.listBibleVersions();
+      return 0;
+    }
+    if (!sword.setModule(options.getOption("bibleversion"))) {
       std::cerr << "cbible: Unknown SWORD module '" << options.getOption("bibleversion") << "'\n";
+      std::cerr << sword.listBibleVersions();
       return 3;
     }
     const std::string reference = options.getOption("reference");

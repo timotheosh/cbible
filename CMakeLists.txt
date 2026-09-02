@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(cbible VERSION 0.20 LANGUAGES CXX)
+project(cbible VERSION 0.21 LANGUAGES CXX)
 
 include(CTest)
 include(GNUInstallDirs)
