@@ -1,95 +1,91 @@
-;;; cbible.el --- Minor mode to be used with cbible.
+;;; cbible.el --- SWORD Bible lookup and commentary integration -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2015 Free Software Foundation, Inc.
-;;
-;; Author: Tim Hawes <tim@easyfreeunix.com>
-;; Maintainer: Tim Hawes <tim@easyfreeunix.com>
-;; Created: 27 Jul 2015
-;; Version: 0.01
-;; Keywords libsword bible commentary
-
-;; This program is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
-;;
-;; This program is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
-;;
-;; You should have received a copy of the GNU General Public License
-;; along with this program; if not, write to the Free Software
-;; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Copyright (C) 2015-2026 Tim Hawes
+;; Version: 0.20
+;; Keywords: tools, bible
 
 ;;; Commentary:
-
-;;
-
-;; Put this file into your load-path and the following into your ~/.emacs:
-;;   (require 'cbible)
+;; A minor mode for inserting Scripture text and writing Personal commentary
+;; through the cbible executable.  No command is evaluated by a shell.
 
 ;;; Code:
 
-(eval-when-compile
-  (require 'cl))
+(require 'subr-x)
 
 (defgroup cbible nil
-  "cbible"
-  :group 'cbible
-  :prefix "cb-")
+  "Use the cbible command from Emacs."
+  :group 'tools
+  :prefix "cbible-")
 
-(defcustom bibleversion "KJV"
-  "Bible version to use (as defined within Sword)."
+(defcustom cbible-program "cbible"
+  "Path to the cbible executable."
+  :type 'file
+  :group 'cbible)
+
+(defcustom cbible-bible-version "KJV"
+  "Default SWORD Bible module."
   :type 'string
-  :group 'cbible
-  )
+  :group 'cbible)
+
+(define-obsolete-variable-alias 'bibleversion 'cbible-bible-version "0.20")
+
+(defun cbible--run (&rest arguments)
+  "Run cbible with ARGUMENTS and return its standard output."
+  (with-temp-buffer
+    (let ((status (apply #'process-file cbible-program nil t nil arguments)))
+      (unless (zerop status)
+        (error "cbible failed: %s" (string-trim-right (buffer-string))))
+      (string-trim-right (buffer-string)))))
 
 (defun cbible-reference (reference &optional version)
-  "Function for looking up Bible passages. If version is ommitted,
-   it will use default version."
-  (if (and version (> (length version) 0))
-      (setq bibver version)
-    (setq bibver bibleversion))
-  (substring
-   (shell-command-to-string
-    (format "cbible -b %s -r \"%s\"" bibver reference))
-   0 -1))
+  "Return REFERENCE from VERSION or `cbible-bible-version'."
+  (cbible--run "-b" (if (and version (not (string-empty-p version)))
+                         version
+                       cbible-bible-version)
+               "-r" reference))
 
-(defun cbible-lookup()
-  "Function that prompts for Scripture reference and version."
+(defun cbible-lookup ()
+  "Prompt for a Scripture reference and module, then insert its text."
   (interactive)
-  (setq version (read-from-minibuffer "Bible Version: "))
-  (setq ref (read-from-minibuffer "Reference: "))
-  (insert (cbible-reference ref version)))
+  (let* ((version (read-string "Bible version: " cbible-bible-version))
+         (reference (read-string "Reference: ")))
+    (insert (cbible-reference reference version))))
 
-(defun cbible-make-entry(entry)
-  "Function for creating a Personal commentary entry."
-  (setq ref (read-from-minibuffer "Reference: "))
-  (shell-command
-   (format "echo \"%s\"|cbible -b Personal -r \"%s\" -i" entry ref)))
+(defun cbible--write-entry (text reference)
+  "Write TEXT to Personal commentary at REFERENCE."
+  (with-temp-buffer
+    (insert text)
+    (let ((status (call-process-region (point-min) (point-max)
+                                       cbible-program nil t nil
+                                       "-b" "Personal" "-r" reference "-i")))
+      (unless (zerop status)
+        (error "cbible failed: %s" (string-trim-right (buffer-string)))))))
 
-(defun cbible-entry-region()
-  "Send region as a Personal commentary entry."
+(defun cbible-make-entry (entry)
+  "Prompt for a reference and write ENTRY to Personal commentary."
+  (cbible--write-entry entry (read-string "Reference: ")))
+
+(defun cbible-entry-region (start end)
+  "Send the region between START and END to Personal commentary."
+  (interactive "r")
+  (cbible-make-entry (buffer-substring-no-properties start end)))
+
+(defun cbible-entry-buffer ()
+  "Send the current buffer to Personal commentary."
   (interactive)
-  (cbible-make-entry (buffer-substring-no-properties (region-beginning) (region-end))))
+  (cbible-make-entry (buffer-substring-no-properties (point-min) (point-max))))
 
-(defun cbible-entry-buffer()
-  (interactive)
-  "Send entire buffer as a Personal commentary entry."
-  (cbible-make-entry (buffer-substring-no-properties 1 (buffer-size))))
+(defvar cbible-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "C-c l") #'cbible-lookup)
+    map)
+  "Keymap for `cbible-mode'.")
 
 (define-minor-mode cbible-mode
-  "cbible mode allows you to insert Bible quotes using Crosswire
-   Bible software. It interacts with a small program called cbible
-   to access libsword Bibles (see http://crosswire.org for more
-   information)."
-  :lighter " cbible "
-  :keymap (let ((map (make-sparse-keymap)))
-            (define-key map (kbd "C-c l") 'cbible-lookup)
-            map)
-  :group 'cbible
-      )
+  "Insert Bible passages and save commentary through cbible."
+  :lighter " cbible"
+  :keymap cbible-mode-map
+  :group 'cbible)
 
 (provide 'cbible)
 ;;; cbible.el ends here

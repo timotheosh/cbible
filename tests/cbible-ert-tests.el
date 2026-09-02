@@ -1,0 +1,27 @@
+;;; cbible-ert-tests.el --- Tests for cbible.el -*- lexical-binding: t; -*-
+(require 'ert)
+(require 'cl-lib)
+(require 'cbible)
+
+(ert-deftest cbible-reference-passes-literal-arguments ()
+  (let (captured)
+    (cl-letf (((symbol-function 'process-file)
+               (lambda (_program _infile _destination _display &rest args)
+                 (setq captured args)
+                 (insert "result\n")
+                 0)))
+      (should (equal (cbible-reference "Gen 1:1; $(touch /tmp/no)" "KJV;echo") "result"))
+    (should (equal captured '("-b" "KJV;echo" "-r" "Gen 1:1; $(touch /tmp/no)"))))))
+
+(ert-deftest cbible-commentary-passes-multiline-unicode-on-stdin ()
+  (let (captured-text captured-args)
+    (cl-letf (((symbol-function 'call-process-region)
+               (lambda (start end _program _delete _destination _display &rest args)
+                 (setq captured-text (buffer-substring-no-properties start end)
+                       captured-args args)
+                 0)))
+      (cbible--write-entry "quote: \"; $HOME\nUnicode: λ" "John 1:1; echo"))
+    (should (equal captured-text "quote: \"; $HOME\nUnicode: λ"))
+    (should (equal captured-args '("-b" "Personal" "-r" "John 1:1; echo" "-i")))))
+
+(provide 'cbible-ert-tests)

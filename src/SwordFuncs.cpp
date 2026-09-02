@@ -1,195 +1,142 @@
-/*
- * Copyright 2020 Tim Hawes <tim@selfdidactic.com>
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
-
-#include <cstdint>
-#include <cstdio>
-#include <cstdlib>
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <sword/listkey.h>
-#include <sword/markupfiltmgr.h>
-#include <sword/swdisp.h>
-#include <sword/swmgr.h>
-#include <sword/swmodule.h>
-#include <sword/versekey.h>
-
 #include "SwordFuncs.hpp"
 #include "utilities.hpp"
 
-SwordFuncs::SwordFuncs() {
-  SetModule("KJV");
+#include <cctype>
+#include <cstdint>
+#include <markupfiltmgr.h>
+#include <sstream>
+#include <stdexcept>
+#include <utility>
+
+namespace {
+class ValidatingVerseKey final : public sword::VerseKey {
+public:
+  using sword::VerseKey::getBookFromAbbrev;
+};
+} // namespace
+
+SwordFuncs::SwordFuncs() { setModule("KJV"); }
+SwordFuncs::SwordFuncs(std::string module_name) { setModule(module_name); }
+
+bool SwordFuncs::setModule(const std::string_view module_name) {
+  auto candidate = std::make_unique<sword::SWMgr>(
+      new sword::MarkupFilterMgr(sword::FMT_PLAIN));
+  auto *candidate_module = candidate->getModule(std::string{module_name}.c_str());
+  if (candidate_module == nullptr) return false;
+
+  candidate_module->setKey(vkey);
+  manager = std::move(candidate);
+  module = candidate_module;
+  mod_name = module_name;
+  return true;
 }
 
-SwordFuncs::SwordFuncs(std::string module_name) {
-  SetModule(module_name);
-}
+void SwordFuncs::versification(const bool on) { versenum = on; }
+bool SwordFuncs::validModule() const noexcept { return module != nullptr; }
 
-SwordFuncs::~SwordFuncs() {
-  delete manager;
-}
-
-void SwordFuncs::SetModule(std::string module_name) {
-  manager = new sword::SWMgr(new sword::MarkupFilterMgr(sword::FMT_PLAIN));
-  module = manager->getModule(module_name.c_str());
-
-  if (!module) {
-    std::cout << listModules() << std::endl;
-  } else {
-    mod_name = module_name;
-    module->setKey(vkey);
-  }
-}
-
-void SwordFuncs::versification(bool on) { versenum = on; }
-
-bool SwordFuncs::validModule() {
-  return (module != NULL);
-}
-
-std::string SwordFuncs::currentRef() {
-  std::string ret = vkey.getText();
-  if (ret.empty())
-    ret = "<EMPTY>";
-  return ret;
+std::string SwordFuncs::currentRef() const {
+  const std::string value = vkey.getText();
+  return value.empty() ? "<EMPTY>" : value;
 }
 
 std::string SwordFuncs::currentText() {
+  if (module == nullptr) throw std::runtime_error("No SWORD module is selected");
   module->setKey(vkey);
-  std::ostringstream os;
-
-  sword::SWBuf buffer = module->renderText();
-  std::string text = buffer.c_str();
-  if (versenum) {
-    os << " " << vkey.getVerse();
-  }
-  os << " " << trim(text);
-  return os.str();
+  std::ostringstream output;
+  const std::string text = module->renderText().c_str();
+  if (versenum) output << ' ' << vkey.getVerse();
+  output << ' ' << trim(text);
+  return output.str();
 }
 
-std::string SwordFuncs::parseInput(char *input) {
-  std::string str = input;
-  if (str.compare(0, 2, "??") == 0) {
-    std::cout << "perform global search" << std::endl;
-  } else if (str.compare(0, 1, "?") == 0) {
-    std::cout << "perform search within module" << std::endl;
-  } else if (str.compare(0, 1, "!") == 0) {
-    std::string mod = str.substr(1);
-    trim(mod);
-    SetModule(mod);
-  } else if (str.empty()) {
-    if (vkey.isTraversable()) {
-      vkey++;
-    }
-  } else {
-    return lookup(str);
+std::string SwordFuncs::parseInput(const std::string_view input) {
+  const std::string command = trim(input);
+  if (command.starts_with('?')) {
+    throw std::invalid_argument("Search commands are not supported yet");
   }
-  return currentText();
+  if (command.starts_with('!')) {
+    const std::string requested = trim(std::string_view{command}.substr(1));
+    if (requested.empty()) throw std::invalid_argument("Module name cannot be empty");
+    if (!setModule(requested)) {
+      throw std::invalid_argument("Unknown SWORD module '" + requested + "'");
+    }
+    return currentText();
+  }
+  if (command.empty()) {
+    if (vkey.isTraversable()) ++vkey;
+    return currentText();
+  }
+  return lookup(command);
 }
 
 std::string SwordFuncs::listModules() {
-  sword::ModMap::iterator it;
-  std::ostringstream ss;
-  for (it = manager->Modules.begin(); it != manager->Modules.end(); it++) {
-    ss << "[" << (*it).second->getName() << "]\t - "
-       << (*it).second->getDescription() << std::endl;
-  }
-  return ss.str();
-}
-
-std::string SwordFuncs::modname() { return mod_name; }
-
-std::string SwordFuncs::lookup(std::string ref) {
+  if (manager == nullptr) return {};
   std::ostringstream output;
-
-  // Set up module specific variables
-  sword::VerseKey vk;
-
-  // Variables related to splitting up the reference for iteration
-  sword::ListKey refRange = vk.parseVerseList(ref.c_str(), vk, true);
-  refRange.setPersist(true);
-  module->setKey(refRange);
-
-  try {
-    int i = 0;
-    for ((*module) = sword::TOP; !module->popError(); (*module)++) {
-      i++;
-      sword::VerseKey nk(module->getKey());
-      sword::SWBuf buffer = module->renderText();
-      std::string text = buffer.c_str();
-      if (versenum) {
-        output << " " << nk.getVerse();
-      }
-      output << " " << trim(text);
-    }
-    if (i > 1)
-      output << std::endl << module->getKey()->getRangeText();
-    vkey = module->getKey();
-  } catch (const std::runtime_error &re) {
-    // speciffic handling for runtime_error
-    std::cerr << "Runtime error: " << re.what() << std::endl;
-  } catch (const std::exception &ex) {
-    // speciffic handling for all exceptions extending std::exception, except
-    // std::runtime_error which is handled explicitly
-    std::cerr << "Error occurred: " << ex.what() << std::endl;
-  } catch (...) {
-    // catch any other errors (that we have no information about)
-    std::cerr << "Unknown failure occured. Possible memory corruption"
-              << std::endl;
+  for (const auto &[name, available_module] : manager->Modules) {
+    output << '[' << name << "]\t - " << available_module->getDescription() << '\n';
   }
   return output.str();
 }
 
-bool SwordFuncs::makeEntry(std::string ref, std::string input) {
-  bool ret = module->isWritable();
-  if (ret) {
+const std::string &SwordFuncs::modname() const noexcept { return mod_name; }
 
-    // Set the key according to the reference.
-    vkey.setText(const_cast<char *>(ref.c_str()));
-    module->setKey(vkey);
-
-    // Check for any exisitng comments
-    std::string ctext = currentText(); //trim(s1);
-    std::string data;
-
-    if (ctext.empty()) {
-      data = input;
-    } else {
-      data = ctext + "<br/><br/>\n\n" + input;
+std::string SwordFuncs::lookup(const std::string_view reference) {
+  if (module == nullptr) throw std::runtime_error("No SWORD module is selected");
+  ValidatingVerseKey parser;
+  const std::string cleaned_reference = trim(reference);
+  std::size_t book_end = cleaned_reference.size();
+  for (std::size_t index = 0; index < cleaned_reference.size(); ++index) {
+    const auto character = static_cast<unsigned char>(cleaned_reference[index]);
+    if (std::isdigit(character) != 0 && index != 0) {
+      book_end = index;
+      break;
     }
-    const char *entry = const_cast<char *>(data.c_str());
-    int64_t length = data.length();
-    module->setEntry(entry, length);
   }
-  return ret;
+  const std::string book = trim(std::string_view{cleaned_reference}.substr(0, book_end));
+  if (book.empty() || parser.getBookFromAbbrev(book.c_str()) < 0) {
+    throw std::invalid_argument("Invalid Scripture reference '" + std::string{reference} + "'");
+  }
+  sword::ListKey range = parser.parseVerseList(cleaned_reference.c_str(), parser, true);
+  if (range.getCount() == 0 || range.popError()) {
+    throw std::invalid_argument("Invalid Scripture reference '" + std::string{reference} + "'");
+  }
+  range.setPersist(true);
+  module->setKey(range);
+
+  std::ostringstream output;
+  int count = 0;
+  for ((*module) = sword::TOP; !module->popError(); (*module)++) {
+    ++count;
+    const sword::VerseKey key{module->getKey()};
+    const std::string text = module->renderText().c_str();
+    if (versenum) output << ' ' << key.getVerse();
+    output << ' ' << trim(text);
+  }
+  if (count == 0) throw std::invalid_argument("Invalid Scripture reference '" + std::string{reference} + "'");
+  if (count > 1) output << '\n' << module->getKey()->getRangeText();
+  vkey = module->getKey();
+  // SWModule retains the key pointer. Restore the owned key before the local
+  // ListKey is destroyed so module teardown never observes a dangling key.
+  module->setKey(vkey);
+  return output.str();
 }
 
-bool SwordFuncs::clearEntry(std::string ref) {
-  bool ret = module->isWritable();
-  if (ret) {
-    vkey.setText(const_cast<char *>(ref.c_str()));
-    module->setKey(vkey);
-    module->setEntry("", 0);
-  }
-  return ret;
+bool SwordFuncs::makeEntry(const std::string_view reference, const std::string_view input) {
+  if (module == nullptr || !module->isWritable()) return false;
+  vkey.setText(std::string{reference}.c_str());
+  module->setKey(vkey);
+  const std::string existing = currentText();
+  const std::string data = trim(existing).empty()
+                               ? std::string{input}
+                               : existing + "<br/><br/>\n\n" + std::string{input};
+  module->setEntry(data.c_str(), static_cast<std::int64_t>(data.size()));
+  return true;
 }
 
-sword::ListKey SwordFuncs::search(int type, std::string search_terms,
-                                  std::string search_scope) {
-  sword::SWKey *key;
-  return module->search(const_cast<char *>(search_terms.c_str()), type, 0, key);
+bool SwordFuncs::clearEntry(const std::string_view reference) {
+  if (module == nullptr || !module->isWritable()) return false;
+  vkey.setText(std::string{reference}.c_str());
+  module->setKey(vkey);
+  module->setEntry("", 0);
+  return true;
 }

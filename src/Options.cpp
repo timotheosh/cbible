@@ -1,223 +1,90 @@
-/*
- * Copyright 2016 Tim Hawes <tim@selfdidactic.com>
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
-
 #include "Options.hpp"
 #include "thirdparty/INIReader.h"
-#include "thirdparty/optionparser.h"
-#include <cstdio>
+
 #include <cstdlib>
-#include <cstring>
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <vector>
+#include <string_view>
+#include <utility>
 
-#define PROGNAME "cbible"
+namespace {
+constexpr std::string_view config_file = ".cbible.cfg";
+constexpr std::string_view default_version = "KJV";
 
-struct Arg : public option::Arg {
-  static void printError(const char *msg1, const option::Option &opt,
-                         const char *msg2) {
-    fprintf(stderr, "%s", msg1);
-    fwrite(opt.name, opt.namelen, 1, stderr);
-    fprintf(stderr, "%s", msg2);
-  }
-
-  static option::ArgStatus Unknown(const option::Option &option, bool msg) {
-    if (msg)
-      printError("Unknown option '", option, "'\n");
-    return option::ARG_ILLEGAL;
-  }
-
-  static option::ArgStatus NonEmpty(const option::Option &option, bool msg) {
-    /* These option keys will always exist, we'll only need to check them. */
-
-    if (option.arg != 0 && option.arg[0] != 0)
-      return option::ARG_OK;
-    if (msg) {
-      if ((strcmp(option.name, "c") == 0) ||
-          (strcmp(option.name, "--config") == 0))
-        printError("Option '", option, "' requires a path to a config file.\n");
-      else
-        printError("Option '", option, "' requires a non-empty argument\n");
-    }
-    return option::ARG_ILLEGAL;
-  }
-};
-
-enum optionIndex {
-  UNKNOWN,
-  HELP,
-  VERSION,
-  CONFIG,
-  VERSENUMBERS,
-  INPUT,
-  EMPTY,
-  BIBLEVERSION,
-  REFERENCE
-};
-
-const option::Descriptor usage[] = {
-    {UNKNOWN, 0, "", "", option::Arg::None,
-     "Usage: " PROGNAME " <options>\n\n"
-     "Options:"},
-    {HELP, 0, "h", "help", option::Arg::None,
-     "  -h [ --help ]  \tProduce help message"},
-    {VERSION, 0, "v", "version", option::Arg::None,
-     "  -v [ --version ]  \tPrint version string"},
-    {CONFIG, 0, "c", "config", Arg::NonEmpty,
-     "  -c [ --config ]  <path>  \tPath for a configuration file"},
-    {VERSENUMBERS, 0, "n", "versenumbers", option::Arg::None,
-     "  -n [ --versenumbers ]  \tShow output with verse numbers"},
-    {INPUT, 0, "i", "input", option::Arg::None,
-     "Send stdin to personal commentary (must be used with -r)."},
-    {EMPTY, 0, "e", "empty", option::Arg::None,
-     "  -e [ --empty ] \tClear all comments in personal commentary for the given reference (must be used with -r)."},
-    {BIBLEVERSION, 0, "b", "bibleversion", Arg::NonEmpty,
-     "  -b [ --bibleversion ] <bible version>  \tBible version "
-     "(using Sword's 3 letter acronym)"},
-    {REFERENCE, 0, "r", "reference", Arg::NonEmpty,
-     "  -r [ --reference ] <reference>  \tScripture reference to look up"},
-    {0, 0, 0, 0, 0, 0}};
+std::string usage() {
+  return "Usage: cbible <options>\n\nOptions:\n"
+         "  -h [ --help ]              Produce help message\n"
+         "  -v [ --version ]           Print version string\n"
+         "  -c [ --config ] <path>     Path for a configuration file\n"
+         "  -n [ --versenumbers ]      Show output with verse numbers\n"
+         "  -i [ --input ]             Send stdin to commentary (requires -r)\n"
+         "  -e [ --empty ]             Clear commentary for reference (requires -r)\n"
+         "  -b [ --bibleversion ] <id> SWORD module name\n"
+         "  -r [ --reference ] <ref>   Scripture reference to look up\n";
+}
+} // namespace
 
 Options::Options(int argc, char *argv[]) {
-  argc -= (argc > 0);
-  argv += (argc > 0); // skip program name argv[0]
-  option::Stats stats(usage, argc, argv);
-  std::vector<option::Option> options(stats.options_max);
-  std::vector<option::Option> buffer(stats.buffer_max);
-  option::Parser parse(usage, argc, argv, &options[0], &buffer[0]);
+  const char *home = std::getenv("HOME");
+  opts["default_configfile"] = home != nullptr && *home != '\0'
+                                   ? std::string{home} + "/" + std::string{config_file}
+                                   : std::string{config_file};
+  opts["config"] = opts["default_configfile"];
 
-  if (options[HELP]) {
-    std::stringstream hs;
-    option::printUsage(hs, usage);
-    Options::opts["help"] = hs.str();
-  } else if (options[VERSION]) {
-    Options::opts["version"] = "version";
-  } else {
-    /* set up value for default config file. */
-    std::string s_home = getenv("HOME");
-    if (!s_home.empty())
-      Options::opts["default_configfile"] = s_home + "/" + CONFIGFILE;
-    else
-      Options::opts["default_configfile"] = CONFIGFILE;
-
-    /* If no config file was specified, use the default. */
-    if (options[CONFIG]) {
-      Options::opts["config"] = options[CONFIG].arg;
-    } else {
-      Options::opts["config"] = Options::opts["default_configfile"];
+  bool bible_version_set = false;
+  auto fail = [this](std::string message) {
+    valid_ = false;
+    error_ = std::move(message);
+  };
+  auto value = [&](int &index, std::string_view option) -> std::string {
+    if (index + 1 >= argc || argv[index + 1][0] == '\0') {
+      fail("Option '" + std::string{option} + "' requires a non-empty argument");
+      return {};
     }
+    return argv[++index];
+  };
 
-    if (options[BIBLEVERSION]) {
-      Options::opts["bibleversion"] = options[BIBLEVERSION].arg;
-    } else {
-      readIni();
+  for (int i = 1; i < argc && valid_; ++i) {
+    const std::string_view arg{argv[i]};
+    if (arg == "-h" || arg == "--help") opts["help"] = usage();
+    else if (arg == "-v" || arg == "--version") opts["version"] = "version";
+    else if (arg == "-n" || arg == "--versenumbers") opts["versenumbers"] = "versenumbers";
+    else if (arg == "-i" || arg == "--input") opts["input"] = "input";
+    else if (arg == "-e" || arg == "--empty") opts["empty"] = "empty";
+    else if (arg == "-c" || arg == "--config") opts["config"] = value(i, arg);
+    else if (arg.starts_with("--config=")) {
+      opts["config"] = std::string{arg.substr(9)};
+      if (opts["config"].empty()) fail("Option '--config' requires a non-empty argument");
     }
+    else if (arg == "-b" || arg == "--bibleversion") {
+      opts["bibleversion"] = value(i, arg);
+      bible_version_set = valid_;
+    } else if (arg.starts_with("--bibleversion=")) {
+      opts["bibleversion"] = std::string{arg.substr(15)};
+      bible_version_set = !opts["bibleversion"].empty();
+      if (!bible_version_set) fail("Option '--bibleversion' requires a non-empty argument");
+    } else if (arg == "-r" || arg == "--reference") opts["reference"] = value(i, arg);
+    else if (arg.starts_with("--reference=")) {
+      opts["reference"] = std::string{arg.substr(12)};
+      if (opts["reference"].empty()) fail("Option '--reference' requires a non-empty argument");
+    }
+    else fail("Unknown option '" + std::string{arg} + "'");
+  }
 
-    if (options[REFERENCE]) {
-      Options::opts["reference"] = options[REFERENCE].arg;
-    }
-
-    Options::opts["input"] = "";
-    if (options[INPUT]) {
-      if (!options[REFERENCE]) {
-        std::cerr << "-i input option cannot be used without a -r reference "
-                  << "(\"You want me to put this... where?\")" << std::endl;
-      } else if (options[EMPTY]) {
-        std::cerr << "-i and and -e cannot be used together! "
-                  << "(\"Add a comment but delete eveyrthing? "
-                  << "Delete everything first, then add a new comment."
-                  << std::endl;
-      } else {
-        Options::opts["input"] = "input";
-      }
-    }
-
-    if (options[EMPTY]) {
-      if (!options[REFERENCE]) {
-        std::cerr << "-e option cannot be used without a -r reference "
-                  << "(\"You want me to empty what... where?\")" << std::endl;
-      } else {
-        Options::opts["empty"] = "empty";
-      }
-    }
-  } // end else
+  if (!valid_ || !opts["help"].empty() || !opts["version"].empty()) return;
+  if (!bible_version_set) readIni();
+  if (opts["bibleversion"].empty()) opts["bibleversion"] = default_version;
+  if (!opts["input"].empty() && opts["reference"].empty()) fail("--input requires --reference");
+  else if (!opts["empty"].empty() && opts["reference"].empty()) fail("--empty requires --reference");
+  else if (!opts["input"].empty() && !opts["empty"].empty()) fail("--input and --empty cannot be used together");
 }
-
-Options::~Options() {}
 
 void Options::readIni() {
-  /**
-   * Reads settings from ini file.
-   */
-  INIReader reader(Options::opts["config"]);
-  if (reader.ParseError() < 0) {
-    std::cerr << "Cannot read configuration from " << Options::opts["config"]
-              << std::endl;
-    return;
+  INIReader reader(opts["config"]);
+  if (reader.ParseError() >= 0) {
+    opts["bibleversion"] = reader.Get("", "bibleversion", std::string{default_version});
   }
-  if (Options::opts["bibleversion"].empty())
-    Options::opts["bibleversion"] =
-        reader.Get("", "bibleversion", DEFAULT_VERSION);
 }
 
-void Options::checkConfig() {
-  /**
-   * Checks for the existence of the default config file. If it does
-   * not exist, it will create one.
-   */
-  FILE *cfgfile = fopen(Options::opts["default_configfile"].c_str(), "r");
-  if (cfgfile == NULL)
-    createConfig();
-  else
-    fclose(cfgfile);
-}
-
-void Options::createConfig() {
-  /**
-   * Creates a new config file.
-   *
-   * @params configfile Path for the new config file.
-   */
-  if (Options::opts["bibleversion"].empty())
-    Options::opts["bibleversion"] = DEFAULT_VERSION;
-  std::ofstream ofs;
-  try {
-    ofs.open(Options::opts["default_configfile"].c_str());
-    if (ofs) {
-      ofs << "bibleversion = " << Options::opts["bibleversion"] << std::endl;
-    } else {
-      throw std::invalid_argument(
-          "Cannot open non-existent config file for writing.");
-    }
-  } catch (std::exception &e) {
-    std::cerr << "Exception thrown during config file creation: " << e.what()
-              << std::endl;
-  } catch (...) {
-    std::cerr << "Unknown Exception thrown during config file creation."
-              << std::endl;
-  }
-  ofs.close();
-}
-
-std::string Options::getOption(std::string opt) { return Options::opts[opt]; }
-
-std::string Options::getOption(const char *opt) {
-  std::string s = opt;
-  return Options::getOption(s);
+std::string Options::getOption(const std::string &option) const {
+  const auto found = opts.find(option);
+  return found == opts.end() ? std::string{} : found->second;
 }

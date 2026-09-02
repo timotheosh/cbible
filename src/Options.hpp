@@ -23,10 +23,6 @@
 #ifndef OPTIONS_HPP
 #define OPTIONS_HPP
 
-#define CONFIGFILE ".cbible.cfg"
-#define DEFAULT_VERSION "KJV"
-#define DEFAULT_REFERENCE "Gen 1:1"
-
 #include <map>
 #include <string>
 
@@ -35,20 +31,15 @@ private:
   /* Vars for holding the option data for cbible */
   std::map<std::string, std::string> opts;
 
-  /* Read options from ini file. */
   void readIni();
-
-  /* Creates the default config file. */
-  void createConfig();
-
-  /* Checks for existence of default config file. */
-  void checkConfig();
+  bool valid_ = true;
+  std::string error_;
 
 public:
   Options(int argc, char *argv[]);
-  ~Options();
-  std::string getOption(std::string);
-  std::string getOption(const char *);
+  [[nodiscard]] std::string getOption(const std::string &) const;
+  [[nodiscard]] bool valid() const noexcept { return valid_; }
+  [[nodiscard]] const std::string &error() const noexcept { return error_; }
 };
 
 #endif // OPTIONS_HPP

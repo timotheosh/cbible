@@ -1,25 +1,11 @@
-/*
- * Copyright 2020 Tim Hawes <tim@selfdidactic.com>
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
-
 #include "Options.hpp"
+#include "Output.hpp"
 #include "SwordFuncs.hpp"
-#include <cstdio>
+
+#include <cstdlib>
 #include <exception>
 #include <iostream>
+#include <memory>
 #include <readline/history.h>
 #include <readline/readline.h>
 #include <sstream>
@@ -27,122 +13,89 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
-#define CBIBLE_VERSION "0.20"
+#ifndef CBIBLE_VERSION
+#define CBIBLE_VERSION "unknown"
+#endif
 
-void OutputText(std::string s);
-
-int main(int argc, char *argv[]) {
-  Options options(argc, argv);
-  std::string help = options.getOption("help");
-  std::string bibleversion = options.getOption("bibleversion");
-  std::string reference = options.getOption("reference");
-  std::string versenumbers = options.getOption("versenumbers");
-  std::string inputtext = options.getOption("input");
-  std::string empty = options.getOption("empty");
-
-  /* Display usage and exit */
-  if (!help.empty()) {
-    std::cout << help << std::endl;
-    return (0);
-  } else if (!options.getOption("version").empty()) {
-    std::cout << "cbible Version " << CBIBLE_VERSION << std::endl;
-    return (0);
-  }
-  if (bibleversion.empty())
-    bibleversion = "KJV";
-
-  SwordFuncs *sw = new SwordFuncs(bibleversion);
-
-  if (!sw->validModule())
-    return(1);
-
-  /* Use interactive mode */
-  if (reference.empty()) {
-    char *buf;
-    rl_bind_key('\t', rl_abort); // disable auto-complete
-
-    try {
-      OutputText(sw->parseInput(const_cast<char *>("Gen 1:1")));
-      while ((buf = readline(
-                  ("bible(" + sw->modname() + ") [" + sw->currentRef() + "]> ")
-                      .c_str())) != NULL) {
-        if ((strcmp(buf, "quit") == 0) || (strcmp(buf, "q") == 0))
-          break;
-
-        try {
-          OutputText(sw->parseInput(buf).c_str());
-        } catch (std::exception &e) {
-          std::cout << e.what() << std::endl;
-        }
-
-        if (buf[0] != 0)
-          add_history(buf);
-      }
-    } catch (std::exception &e) {
-      std::cout << e.what() << std::endl;
-    }
-    free(buf);
-  } else {
-    /* check if we are to empty */
-    if (!empty.empty())
-      sw->clearEntry(reference);
-    /* Lookup the reference and exit. */
-    if (versenumbers.empty()) {
-      sw->versification(false);
-    }
-    if (inputtext.empty()) {
-      OutputText(sw->parseInput(const_cast<char *>(reference.c_str())));
-    } else {
-      std::string line;
-      std::stringstream is;
-      while (std::getline(std::cin, line)) {
-        is << line << std::endl;
-      }
-      sw->makeEntry(reference, is.str());
-    }
-  }
-  delete sw;
-  return 0;
+namespace {
+std::size_t terminalWidth() {
+  if (isatty(STDOUT_FILENO) == 0) return 0;
+  winsize dimensions{};
+  if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &dimensions) != 0) return 0;
+  return dimensions.ws_col;
 }
 
-void OutputText(std::string s) {
-  struct winsize w;
-  ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+void outputText(const std::string &text) {
+  std::cout << wrapText(text, terminalWidth()) << '\n';
+}
 
-  int bufferWidth = w.ws_col;
-
-  /* If executed from Emacs' eshell, bufferWidth will be 0. */
-  if (bufferWidth > 0) {
-    for (unsigned int i = 1; i <= s.length(); i++) {
-      char c = s[i - 1];
-
-      int spaceCount = 0;
-
-      // Add whitespace if newline detected.
-      if (c == '\n') {
-        int charNumOnLine = ((i) % bufferWidth);
-        spaceCount = bufferWidth - charNumOnLine;
-        /* insert space before newline break */
-        s.insert((i - 1), (spaceCount), ' ');
-        /* jump forward in string to character at beginning of next line. */
-        i += (spaceCount);
-        continue;
-      }
-
-      if ((i % bufferWidth) == 0) {
-        if (c != ' ') {
-          for (int j = (i - 1); j > -1; j--) {
-            if (s[j] == ' ') {
-              s.insert(j, spaceCount, ' ');
-              break;
-            } else {
-              spaceCount++;
-            }
-          }
-        }
-      }
+int interactive(SwordFuncs &sword) {
+  rl_bind_key('\t', rl_abort);
+  outputText(sword.parseInput("Gen 1:1"));
+  using Line = std::unique_ptr<char, decltype(&std::free)>;
+  while (true) {
+    const std::string prompt = "bible(" + sword.modname() + ") [" + sword.currentRef() + "]> ";
+    Line line{readline(prompt.c_str()), &std::free};
+    if (!line) break;
+    const std::string command{line.get()};
+    if (command == "quit" || command == "q") break;
+    try {
+      outputText(sword.parseInput(command));
+      if (!command.empty()) add_history(line.get());
+    } catch (const std::exception &error) {
+      std::cerr << "cbible: " << error.what() << '\n';
     }
   }
-  // Output string to console
-  std::cout << s << std::endl;
+  return 0;
+}
+} // namespace
+
+int main(int argc, char *argv[]) {
+  const Options options{argc, argv};
+  if (!options.valid()) {
+    std::cerr << "cbible: " << options.error() << '\n';
+    return 2;
+  }
+  if (const std::string help = options.getOption("help"); !help.empty()) {
+    std::cout << help;
+    return 0;
+  }
+  if (!options.getOption("version").empty()) {
+    std::cout << "cbible Version " << CBIBLE_VERSION << '\n';
+    return 0;
+  }
+
+  try {
+    SwordFuncs sword{options.getOption("bibleversion")};
+    if (!sword.validModule()) {
+      std::cerr << "cbible: Unknown SWORD module '" << options.getOption("bibleversion") << "'\n";
+      return 3;
+    }
+    const std::string reference = options.getOption("reference");
+    if (reference.empty()) return interactive(sword);
+    if (!options.getOption("versenumbers").empty()) sword.versification(true);
+    else sword.versification(false);
+
+    if (!options.getOption("empty").empty() && !sword.clearEntry(reference)) {
+      std::cerr << "cbible: Module '" << sword.modname() << "' is not writable\n";
+      return 4;
+    }
+    if (!options.getOption("input").empty()) {
+      std::ostringstream input;
+      input << std::cin.rdbuf();
+      if (!sword.makeEntry(reference, input.str())) {
+        std::cerr << "cbible: Module '" << sword.modname() << "' is not writable\n";
+        return 4;
+      }
+    } else if (options.getOption("empty").empty()) {
+      outputText(sword.lookup(reference));
+    }
+  } catch (const std::invalid_argument &error) {
+    std::cerr << "cbible: " << error.what() << '\n';
+    return 2;
+  } catch (const std::exception &error) {
+    std::cerr << "cbible: " << error.what() << '\n';
+    return 1;
+  }
+  return 0;
 }

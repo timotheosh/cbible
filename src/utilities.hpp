@@ -17,13 +17,13 @@
 
 // Utility functions.
 
-#ifndef UTILITIES_HPP
-#define UTILITIES_HPP
+#ifndef CBIBLE_UTILITIES_HPP
+#define CBIBLE_UTILITIES_HPP
 
 #include <algorithm>
 #include <cctype>
-#include <functional>
-#include <locale>
+#include <string>
+#include <string_view>
 
 /**
  * Code for trimming whitespace from strings.
@@ -32,23 +32,14 @@
  */
 
 // trim from start
-static inline std::string &ltrim(std::string &s) {
-  s.erase(s.begin(),
-          std::find_if(s.begin(), s.end(),
-                       std::not1(std::ptr_fun<int, int>(std::isspace))));
-  return s;
+[[nodiscard]] inline std::string trim(std::string_view value) {
+  const auto is_space = [](unsigned char c) { return std::isspace(c) != 0; };
+  const auto first = std::find_if_not(value.begin(), value.end(), is_space);
+  const auto last = std::find_if_not(value.rbegin(), value.rend(), is_space).base();
+  if (first >= last) {
+    return {};
+  }
+  return {first, last};
 }
 
-// trim from end
-static inline std::string &rtrim(std::string &s) {
-  s.erase(std::find_if(s.rbegin(), s.rend(),
-                       std::not1(std::ptr_fun<int, int>(std::isspace)))
-              .base(),
-          s.end());
-  return s;
-}
-
-// trim from both ends
-static inline std::string &trim(std::string &s) { return ltrim(rtrim(s)); }
-
-#endif // UTILITIES_HPP
+#endif
